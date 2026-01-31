@@ -656,6 +656,9 @@ const CandlestickChart: React.FC = () => {
     },
   };
 
+  // 统一价格轴宽度，避免主图/副图右侧对齐错位
+  const PRICE_SCALE_MIN_WIDTH = 90;
+
   // 创建所有图表
   const createCharts = () => {
     if (!chartContainerRef.current) return;
@@ -697,6 +700,7 @@ const CandlestickChart: React.FC = () => {
           },
           rightPriceScale: {
             borderColor: '#2e3241',
+            minimumWidth: PRICE_SCALE_MIN_WIDTH,
           },
           timeScale: {
             borderColor: '#2e3241',
