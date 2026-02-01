@@ -47,19 +47,16 @@ const BacktestFactoryPage: React.FC = () => {
   const { pageSize: adaptivePageSize } = useAdaptivePagination({
     rowHeight: 100,
     minPageSize: 3,
-    navbarHeight: 0,
-    basePadding: 40,
+    navbarHeight: 60,
+    basePadding: 48,
     getOtherElementsHeight: () => {
       const filters = document.querySelector('.filters');
       const pagination = document.querySelector('.pagination-container');
-      // .strategy-header approx height is 45px, but let's check if we can query it
-      // In the table it might be thead or similar, but here it looks like a list.
-      // Let's stick to the previous estimation logic which seemed to look for .strategy-header if it exists, or just use constant.
-      // Previous code used 45 for tableHeaderHeight.
+      const tableHeader = document.querySelector('.strategy-header');
       
       const filtersHeight = filters ? filters.clientHeight : 100;
       const paginationHeight = pagination ? pagination.clientHeight : 60;
-      const tableHeaderHeight = 45; 
+      const tableHeaderHeight = tableHeader ? tableHeader.clientHeight : 45; 
       
       const margins = 20;
       return filtersHeight + paginationHeight + tableHeaderHeight + margins;
@@ -757,16 +754,24 @@ const BacktestFactoryPage: React.FC = () => {
   };
 
   // 生成分页控件 - 与历史回测页面保持一致
-  const renderPagination = () => {
-    // 计算总记录数
-    const totalRecords = Object.entries(strategies).filter(([code, strategy]) => {
-      // 应用相同的过滤逻辑
-      let matches = true;
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      // 滚动到顶部
+      const listContainer = document.querySelector('.strategy-body');
+      if (listContainer) {
+        listContainer.scrollTop = 0;
+      }
+    }
+  };
 
+  const renderPagination = () => {
+    // 重新计算总数以确保准确性
+    const totalRecords = Object.entries(strategies).filter(([code, strategy]) => {
+      let matches = true;
       if (selectedCategory) {
         matches = matches && strategy.category === selectedCategory;
       }
-
       if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
         matches = matches && (
@@ -775,22 +780,23 @@ const BacktestFactoryPage: React.FC = () => {
           strategy.description.toLowerCase().includes(searchTermLower)
         );
       }
-
       return matches;
     }).length;
+
+    if (totalRecords === 0) return null;
 
     return (
       <div className="pagination-container">
         <div className="pagination-buttons">
           <button
-            onClick={() => setCurrentPage(1)}
+            onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
             className="pagination-button"
           >
             首页
           </button>
           <button
-            onClick={() => setCurrentPage(currentPage - 1)}
+            onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className="pagination-button"
           >
@@ -800,14 +806,14 @@ const BacktestFactoryPage: React.FC = () => {
             {currentPage} / {totalPages} 页 (共 {totalRecords} 条记录)
           </div>
           <button
-            onClick={() => setCurrentPage(currentPage + 1)}
+            onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             className="pagination-button"
           >
             下一页
           </button>
           <button
-            onClick={() => setCurrentPage(totalPages)}
+            onClick={() => handlePageChange(totalPages)}
             disabled={currentPage === totalPages}
             className="pagination-button"
           >

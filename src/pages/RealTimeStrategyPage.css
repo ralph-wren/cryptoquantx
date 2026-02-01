@@ -472,9 +472,8 @@
   justify-content: center;
   align-items: center;
   padding: 15px 0 0 0;
-  background-color: #171b26;
-  border-top: 1px solid #2a2a3a;
-  margin-top: auto;
+  background-color: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
   width: 100%;
   box-sizing: border-box;
@@ -487,31 +486,37 @@
 }
 
 .pagination-button {
-  padding: 6px 16px;
-  background-color: #2a2a3a;
-  color: #e6e6e6;
-  border: 1px solid #3a3a4a;
+  height: 36px;
+  box-sizing: border-box;
+  margin: 0;
+  background-color: rgb(41, 98, 255);
+  color: white;
+  border: none;
   border-radius: 4px;
-  cursor: pointer;
+  padding: 0 16px;
   font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s ease;
-  height: auto;
-  min-width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 60px;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #3a3a4a;
-  border-color: #4a4a5a;
+  background-color: rgb(30, 80, 220);
 }
 
 .pagination-button:disabled {
-  opacity: 0.5;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
   cursor: not-allowed;
-  background-color: #1f1f2f;
 }
 
 .pagination-info {
-  color: #8d8d8d;
+  color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
   margin: 0 15px;
 }
@@ -520,7 +525,7 @@
 .refresh-container {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 15px;
+  margin-bottom: 0;
 }
 
 /* 标题和刷新按钮在同一行 */
@@ -600,8 +605,8 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 12px;
-  background-color: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
+  background-color: rgba(255, 82, 82, 0.1);
+  color: #ff5252;
   font-size: 12px;
   font-weight: bold;
 }
@@ -615,13 +620,13 @@
   font-size: 12px;
 }
 
-/* 正负值颜色 */
+/* 正负值颜色 - 红涨绿跌 */
 .positive {
-  color: #4caf50 !important;
+  color: #ff5252 !important;
 }
 
 .negative {
-  color: #f44336 !important;
+  color: #00c853 !important;
 }
 
 /* 策略列表容器 */
@@ -705,13 +710,13 @@
   color: #ffffff;
 }
 
-/* 正负值颜色 */
+/* 正负值颜色 - 红涨绿跌 */
 .stat-value.positive {
-  color: #00c853;
+  color: #ff5252;
 }
 
 .stat-value.negative {
-  color: #ff5252;
+  color: #00c853;
 }
 
 /* 响应式布局调整 */

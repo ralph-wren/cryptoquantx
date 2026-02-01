@@ -83,8 +83,8 @@ const RealTimeStrategyPage: React.FC = () => {
   const { pageSize: adaptivePageSize } = useAdaptivePagination({
     rowHeight: 60, 
     minPageSize: 5,
-    navbarHeight: 0,
-    basePadding: 40, 
+    navbarHeight: 60,
+    basePadding: 48, 
     getOtherElementsHeight: () => {
       const headerRow = document.querySelector('.header-row');
       const pagination = document.querySelector('.pagination-container');
@@ -94,7 +94,7 @@ const RealTimeStrategyPage: React.FC = () => {
       const paginationHeight = pagination ? pagination.clientHeight : 60;
       const tableHeaderHeight = tableHeader ? tableHeader.clientHeight : 50;
       
-      const margins = 40;
+      const margins = 20;
       return headerHeight + paginationHeight + tableHeaderHeight + margins;
     },
     dependencies: [strategies.length, initialLoading]
@@ -668,8 +668,15 @@ const RealTimeStrategyPage: React.FC = () => {
   const currentPageData = sortedStrategies.slice(startIndex, endIndex);
 
   // 处理页码变化
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      // 滚动到顶部
+      const listContainer = document.querySelector('.strategies-table-container');
+      if (listContainer) {
+        listContainer.scrollTop = 0;
+      }
+    }
   };
 
 
@@ -984,7 +991,7 @@ const RealTimeStrategyPage: React.FC = () => {
                   上一页
                 </button>
                 <div className="pagination-info">
-                  {currentPage} / {totalPages} 页 (共 {strategies.length} 条记录)
+                  {currentPage} / {totalPages} 页 (共 {sortedStrategies.length} 条记录)
                 </div>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
