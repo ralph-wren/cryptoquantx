@@ -6,6 +6,7 @@ import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateS
 import ResultModal from '../components/ResultModal/ResultModal';
 import CodeModal from '../components/CodeModal/CodeModal';
 import { Strategy, StrategyMap, ParsedParams, StrategyParam } from '../types/strategy';
+import { useAdaptivePagination } from '../hooks/useAdaptivePagination';
 import './BacktestFactoryPage.css';
 
 const BacktestFactoryPage: React.FC = () => {
@@ -28,7 +29,7 @@ const BacktestFactoryPage: React.FC = () => {
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(9);
+  const [itemsPerPage, setItemsPerPageState] = useState<number>(9);
   const [totalPages, setTotalPages] = useState<number>(1);
 
   // 过滤和排序
@@ -41,6 +42,36 @@ const BacktestFactoryPage: React.FC = () => {
 
   // 缓存处理过的数据
   const [filteredStrategies, setFilteredStrategies] = useState<[string, Strategy][]>([]);
+
+  // 自适应页大小计算
+  const { pageSize: adaptivePageSize } = useAdaptivePagination({
+    rowHeight: 100,
+    minPageSize: 3,
+    navbarHeight: 0,
+    basePadding: 40,
+    getOtherElementsHeight: () => {
+      const filters = document.querySelector('.filters');
+      const pagination = document.querySelector('.pagination-container');
+      // .strategy-header approx height is 45px, but let's check if we can query it
+      // In the table it might be thead or similar, but here it looks like a list.
+      // Let's stick to the previous estimation logic which seemed to look for .strategy-header if it exists, or just use constant.
+      // Previous code used 45 for tableHeaderHeight.
+      
+      const filtersHeight = filters ? filters.clientHeight : 100;
+      const paginationHeight = pagination ? pagination.clientHeight : 60;
+      const tableHeaderHeight = 45; 
+      
+      const margins = 20;
+      return filtersHeight + paginationHeight + tableHeaderHeight + margins;
+    },
+    dependencies: [loading, Object.keys(strategies).length]
+  });
+
+  useEffect(() => {
+    if (adaptivePageSize > 0) {
+      setItemsPerPageState(adaptivePageSize);
+    }
+  }, [adaptivePageSize]); 
 
   // 删除确认模态框状态
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -782,22 +813,6 @@ const BacktestFactoryPage: React.FC = () => {
           >
             末页
           </button>
-        </div>
-        <div className="page-size-selector">
-          每页
-          <select
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-          条
         </div>
       </div>
     );

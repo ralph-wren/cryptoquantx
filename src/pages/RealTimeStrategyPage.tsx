@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, copyRealTimeStrategy, fetchHoldingPositionsProfits, buyFullPosition, sellFullPosition } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import CopyStrategyModal from '../components/CopyStrategyModal/CopyStrategyModal';
+import { useAdaptivePagination } from '../hooks/useAdaptivePagination';
 import './RealTimeStrategyPage.css';
 
 // 定义排序字段和排序方向类型
@@ -77,6 +78,33 @@ const RealTimeStrategyPage: React.FC = () => {
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
+
+  // 自适应页大小计算
+  const { pageSize: adaptivePageSize } = useAdaptivePagination({
+    rowHeight: 60, 
+    minPageSize: 5,
+    navbarHeight: 0,
+    basePadding: 40, 
+    getOtherElementsHeight: () => {
+      const headerRow = document.querySelector('.header-row');
+      const pagination = document.querySelector('.pagination-container');
+      const tableHeader = document.querySelector('.strategies-table thead');
+      
+      const headerHeight = headerRow ? headerRow.clientHeight : 150;
+      const paginationHeight = pagination ? pagination.clientHeight : 60;
+      const tableHeaderHeight = tableHeader ? tableHeader.clientHeight : 50;
+      
+      const margins = 40;
+      return headerHeight + paginationHeight + tableHeaderHeight + margins;
+    },
+    dependencies: [strategies.length, initialLoading]
+  });
+
+  useEffect(() => {
+    if (adaptivePageSize > 0) {
+      setPageSize(adaptivePageSize);
+    }
+  }, [adaptivePageSize]);
 
   // 添加排序状态
   const [sortField, setSortField] = useState<SortField>('updateTime'); // 默认按更新时间排序
@@ -644,11 +672,6 @@ const RealTimeStrategyPage: React.FC = () => {
     setCurrentPage(page);
   };
 
-  // 处理每页显示数量变化
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setCurrentPage(1); // 重置到第一页
-  };
 
   return (
     <div className="real-time-strategy-page">
@@ -977,19 +1000,6 @@ const RealTimeStrategyPage: React.FC = () => {
                 >
                   末页
                 </button>
-              </div>
-              <div className="page-size-selector">
-                每页
-                <select
-                  value={pageSize}
-                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                >
-                  <option value={pageSize}>{pageSize}</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-                条
               </div>
             </div>
           )}

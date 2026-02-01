@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchBatchBacktestStatistics, fetchBacktestStrategies } from '../services/api';
 import { formatPercentage } from '../utils/helpers';
+import { useAdaptivePagination } from '../hooks/useAdaptivePagination';
 import './BatchBacktestPage.css';
 
 interface BatchBacktestStatistics {
@@ -37,7 +38,29 @@ const BatchBacktestPage: React.FC = () => {
   const [strategyMap, setStrategyMap] = useState<{[key: string]: Strategy}>({});
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSizeState] = useState(10);
+
+  // 自适应页大小计算
+  const { pageSize: adaptivePageSize } = useAdaptivePagination({
+    rowHeight: 50,
+    minPageSize: 5,
+    navbarHeight: 60,
+    basePadding: 48,
+    getOtherElementsHeight: () => {
+      const pagination = document.querySelector('.pagination-container');
+      const tableHeaderHeight = 50;
+      const paginationHeight = pagination ? pagination.clientHeight : 60;
+      const margins = 40; // margin top/bottom for container
+      return paginationHeight + tableHeaderHeight + margins;
+    },
+    dependencies: [loading, batchBacktests.length]
+  });
+
+  useEffect(() => {
+    if (adaptivePageSize > 0) {
+      setPageSizeState(adaptivePageSize);
+    }
+  }, [adaptivePageSize]);
 
   useEffect(() => {
     const loadBatchBacktests = async () => {
@@ -101,11 +124,6 @@ const BatchBacktestPage: React.FC = () => {
     setCurrentPage(page);
   };
 
-  // 处理每页显示数量变化
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setCurrentPage(1); // 重置到第一页
-  };
 
   return (
     <div className="batch-backtest-page">
@@ -209,19 +227,6 @@ const BatchBacktestPage: React.FC = () => {
             >
               末页
             </button>
-          </div>
-          <div className="page-size-selector">
-            每页
-            <select
-              value={pageSize}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-            条
           </div>
         </div>
       )}

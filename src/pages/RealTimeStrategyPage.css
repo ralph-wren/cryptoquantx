@@ -1,8 +1,12 @@
 .real-time-strategy-page {
-  padding: 20px;
+  padding: 20px 20px 0px 20px;
   background-color: #1e222d;
-  min-height: 100vh;
+  height: 100vh;
   color: #d9d9d9;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .page-header {
@@ -108,7 +112,8 @@
 
 .strategies-table-container {
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden; /* 隐藏垂直滚动条 */
+  flex: 1; /* 占据剩余空间 */
 }
 
 .strategies-table {
@@ -141,6 +146,24 @@
 
 .strategies-table tr:hover {
   background-color: #2a2e3a;
+}
+
+/* Ensure action column buttons don't wrap and have enough space */
+.strategies-table td:last-child,
+.strategies-table th:last-child {
+  white-space: nowrap;
+  min-width: 520px;
+  text-align: center;
+  position: sticky;
+  right: 0;
+  background-color: #252936; /* Match table background */
+  z-index: 1000;
+  box-shadow: -5px 0 10px -5px rgba(0,0,0,0.5);
+}
+
+.strategies-table th:last-child {
+  background-color: #2e3241; /* Match header background */
+  z-index: 1001; /* Higher than td sticky */
 }
 
 .status-badge {
@@ -443,91 +466,55 @@
   background-color: #0b7dda;
 }
 
-/* 添加分页样式 */
+/* Pagination Styles - Aligned with BacktestSummaryPage */
 .pagination-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #1e2233;
-  border-radius: 4px;
-  width: calc(100% - 40px);
+  padding: 15px 0 0 0;
+  background-color: #171b26;
+  border-top: 1px solid #2a2a3a;
+  margin-top: auto;
+  flex-shrink: 0;
+  width: 100%;
   box-sizing: border-box;
-  flex-wrap: wrap;
-  gap: 10px;
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
-  max-width: calc(100vw - 80px);
 }
 
 .pagination-buttons {
   display: flex;
   align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 10px;
 }
 
 .pagination-button {
-  height: 36px;
-  box-sizing: border-box;
-  margin: 0;
-  background-color: rgb(41, 98, 255);
-  color: white;
-  border: none;
+  padding: 6px 16px;
+  background-color: #2a2a3a;
+  color: #e6e6e6;
+  border: 1px solid #3a3a4a;
   border-radius: 4px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
+  font-size: 14px;
   transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  min-width: 60px;
+  height: auto;
+  min-width: auto;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #1e4bd8;
+  background-color: #3a3a4a;
+  border-color: #4a4a5a;
 }
 
 .pagination-button:disabled {
-  background-color: rgb(41, 98, 255);
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.7;
+  background-color: #1f1f2f;
 }
 
 .pagination-info {
-  margin: 0 10px;
+  color: #8d8d8d;
   font-size: 14px;
-  color: #e6e6e6;
-  white-space: nowrap;
+  margin: 0 15px;
 }
-
-.page-size-selector {
-  margin-left: 10px;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #e6e6e6;
-  white-space: nowrap;
-}
-
-.page-size-selector select {
-  margin: 0 8px;
-  padding: 4px 8px;
-  background-color: #2a3042;
-  color: #e6e6e6;
-  border: 1px solid #3a4157;
-  border-radius: 4px;
-  font-size: 14px;
-} 
 
 /* 刷新按钮 */
 .refresh-container {
@@ -641,9 +628,13 @@
 .strategies-container {
   background-color: #1e222d;
   border-radius: 8px;
-  padding: 20px;
+  padding: 20px 20px 0 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-} 
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
 
 /* 可排序表头样式 */
 .sortable-header {

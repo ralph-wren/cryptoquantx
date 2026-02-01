@@ -6,7 +6,7 @@ import { AppState, BacktestSummary } from '../store/types';
 import { setBacktestSummaries } from '../store/actions';
 import { fetchBacktestSummaries, fetchBatchBacktestSummariesBatch } from '../services/api';
 import { formatPercentage } from '../utils/helpers';
-import Logo from '../components/Logo';
+import { useAdaptivePagination } from '../hooks/useAdaptivePagination';
 import './BacktestSummaryPage.css';
 
 // 指标说明
@@ -130,7 +130,7 @@ const BacktestSummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSizeState] = useState(15);
   const [sortField, setSortField] = useState<SortField>('createTime');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
@@ -162,6 +162,41 @@ const BacktestSummaryPage: React.FC = () => {
     x: 0,
     y: 0
   });
+
+  // 使用自定义 Hook 进行自适应分页计算
+  const { pageSize: adaptivePageSize } = useAdaptivePagination({
+    rowHeight: 50, // CSS 中定义的行高
+    minPageSize: 5,
+    navbarHeight: 60,
+    basePadding: 48, // 页面内边距 (24px top + 24px bottom)
+    getOtherElementsHeight: () => {
+      const filters = document.querySelector('.filters-container');
+      const pagination = document.querySelector('.pagination-container');
+      // 表头高度固定为 50px
+      const tableHeaderHeight = 50; 
+      
+      const filtersHeight = filters ? filters.clientHeight : 60; // 默认估计值
+      const paginationHeight = pagination ? pagination.clientHeight : 53; // 默认估计值
+      
+      // 加上一些 margin
+      // filters margin-bottom: 10px
+      // table margin-top: 10px
+      const margins = 20;
+      
+      return filtersHeight + paginationHeight + tableHeaderHeight + margins;
+    },
+    dependencies: [loading, filteredData.length, aggregationDimension]
+  });
+
+  // 更新 pageSize 状态
+  useEffect(() => {
+    if (adaptivePageSize > 0) {
+      setPageSizeState(adaptivePageSize);
+    }
+  }, [adaptivePageSize]);
+
+  // 重命名原始的 pageSize 状态 setter 以避免冲突
+  const setPageSize = setPageSizeState;
 
   useEffect(() => {
     if (batchBacktestId) {
@@ -1318,22 +1353,6 @@ const BacktestSummaryPage: React.FC = () => {
           >
             末页
           </button>
-          <div className="page-size-selector">
-            每页
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-            >
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            条
-          </div>
         </div>
       )}
 

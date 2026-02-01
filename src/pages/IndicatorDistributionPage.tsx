@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchIndicatorDistributions, updateIndicatorDistributions, fetchAccountBalance } from '../services/api';
+import { useAdaptivePagination } from '../hooks/useAdaptivePagination';
 import './IndicatorDistributionPage.css';
 
 interface IndicatorDetail {
@@ -30,9 +31,6 @@ interface IndicatorDistributionData {
   indicatorDetails: IndicatorDetail[];
 }
 
-// 每页显示的指标数量
-const INDICATORS_PER_PAGE = 15;
-
 const IndicatorDistributionPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [updating, setUpdating] = useState<boolean>(false);
@@ -42,7 +40,35 @@ const IndicatorDistributionPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(INDICATORS_PER_PAGE);
+  const [pageSize, setPageSize] = useState(15);
+  
+  // 自适应页大小计算
+  const { pageSize: adaptivePageSize } = useAdaptivePagination({
+    rowHeight: 50,
+    minPageSize: 5,
+    navbarHeight: 0,
+    basePadding: 40,
+    getOtherElementsHeight: () => {
+      const filters = document.querySelector('.filters');
+      const pagination = document.querySelector('.pagination-container');
+      const tableHeader = document.querySelector('.indicator-distribution-table thead');
+      
+      const filtersHeight = filters ? filters.clientHeight : 50;
+      const paginationHeight = pagination ? pagination.clientHeight : 60;
+      const tableHeaderHeight = tableHeader ? tableHeader.clientHeight : 50;
+      
+      const margins = 40;
+      return filtersHeight + paginationHeight + tableHeaderHeight + margins;
+    },
+    dependencies: [data?.indicatorDetails?.length, loading]
+  });
+
+  useEffect(() => {
+    if (adaptivePageSize > 0) {
+      setPageSize(adaptivePageSize);
+    }
+  }, [adaptivePageSize]);
+
   // 添加账户余额状态
   const [accountBalance, setAccountBalance] = useState<number | null>(null);
   const [loadingBalance, setLoadingBalance] = useState<boolean>(false);
@@ -193,7 +219,7 @@ const IndicatorDistributionPage: React.FC = () => {
     return Math.ceil(filteredIndicators.length / pageSize);
   };
 
-  // 获取当前页的指标
+  // 获取当前页的指标 
   const getCurrentPageIndicators = () => {
     const filteredIndicators = getFilteredIndicators();
     const startIndex = (currentPage - 1) * pageSize;
@@ -204,12 +230,6 @@ const IndicatorDistributionPage: React.FC = () => {
   // 处理页面变更
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-  };
-
-  // 处理每页显示数量变化
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setCurrentPage(1); // 重置到第一页
   };
 
   // 渲染表头
@@ -414,19 +434,6 @@ const IndicatorDistributionPage: React.FC = () => {
                 >
                   末页
                 </button>
-              </div>
-              <div className="page-size-selector">
-                每页
-                <select
-                  value={pageSize}
-                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                >
-                  <option value={10}>10</option>
-                  <option value={13}>13</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-                条
               </div>
             </div>
           )}

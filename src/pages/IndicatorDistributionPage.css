@@ -1,14 +1,18 @@
 .indicator-distribution-page {
-  padding: 20px;
+  padding: 20px 20px 0px 20px;
   max-width: 100%;
-  overflow-x: auto;
   background-color: #171b26;
   color: #e6e6e6;
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .page-header {
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .header-content {
@@ -154,10 +158,12 @@
 /* 表格样式 */
 .table-container {
   overflow-x: auto;
-  margin-bottom: 30px;
+  overflow-y: hidden;
+  margin-bottom: 0;
   background-color: #1a1a2e;
   border-radius: 4px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  flex-grow: 1;
 }
 
 .indicator-distribution-table {
@@ -169,9 +175,11 @@
 
 .indicator-distribution-table th,
 .indicator-distribution-table td {
-  padding: 10px 12px;
+  padding: 0 12px;
   text-align: center;
   border: 1px solid #2a2a3a;
+  height: 50px;
+  box-sizing: border-box;
 }
 
 .indicator-distribution-table th {
@@ -368,93 +376,61 @@
   }
 }
 
-/* 分页控件 */
+/* Pagination Styles - Aligned with BacktestSummaryPage */
 .pagination-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #1e2233;
-  border-radius: 4px;
-  width: calc(100% - 40px); /* 考虑父容器的 padding */
+  padding: 15px 0 0 0;
+  background-color: #171b26;
+  border-top: 1px solid #2a2a3a;
+  margin-top: auto;
+  flex-shrink: 0;
+  width: 100%;
   box-sizing: border-box;
-  flex-wrap: wrap;
-  gap: 10px;
-  position: fixed; /* 改为固定定位 */
-  bottom: 20px; /* 距离底部20px */
-  left: 50%;
-  transform: translateX(-50%); /* 水平居中 */
-  z-index: 1000;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
-  max-width: calc(100vw - 80px); /* 最大宽度不超过视窗 */
 }
 
 .pagination-buttons {
   display: flex;
   align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 10px;
 }
 
 .pagination-button {
-  height: 36px;
-  box-sizing: border-box;
-  margin: 0;
-  background-color: rgb(41, 98, 255);
-  color: white;
-  border: none;
+  padding: 6px 16px;
+  background-color: #2a2a3a;
+  color: #e6e6e6;
+  border: 1px solid #3a3a4a;
   border-radius: 4px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
+  font-size: 14px;
   transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  min-width: 60px;
+  height: auto;
+  min-width: auto;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #1e4bd8;
+  background-color: #3a3a4a;
+  border-color: #4a4a5a;
 }
 
 .pagination-button:disabled {
-  background-color: rgb(41, 98, 255);
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.7;
+  background-color: #1f1f2f;
 }
 
 .pagination-info {
-  margin: 0 10px;
+  color: #8d8d8d;
   font-size: 14px;
-  color: #e6e6e6;
-  white-space: nowrap;
-}
-
-.page-size-selector {
-  margin-left: 10px;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #e6e6e6;
-  white-space: nowrap;
-}
-
-.page-size-selector select {
-  margin: 0 8px;
-  padding: 4px 8px;
-  background-color: #2a3042;
-  color: #e6e6e6;
-  border: 1px solid #3a4157;
-  border-radius: 4px;
-  font-size: 14px;
+  margin: 0 15px;
 }
 
 /* 为内容区域添加底部边距，防止被固定的分页控件遮挡 */
 .content {
-  padding-bottom: 80px;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 } 

@@ -137,11 +137,12 @@
 }
 
 .summary-table-container {
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   flex-grow: 1;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  max-height: calc(100vh - 280px);
+  margin-top: 10px;
+  margin-bottom: 0;
+  max-height: none;
   position: relative;
 }
 
@@ -181,11 +182,13 @@
 
 .summary-table th,
 .summary-table td {
-  padding: 12px 15px;
+  padding: 0 15px;
+  height: 50px;
   text-align: left;
   border-bottom: 1px solid #2a2a3a;
   white-space: nowrap;
   min-width: 100px;
+  box-sizing: border-box;
 }
 
 .summary-table th {
@@ -295,67 +298,47 @@
   background-color: #00a043;
 }
 
-/* 添加分页样式 */
+/* 分页样式 */
 .pagination-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 0;
-  padding: 10px;
-  background-color: #1e2233;
-  border-radius: 4px;
+  padding: 15px 0 0 0;
+  background-color: #171b26;
+  border-top: 1px solid #2a2a3a;
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .pagination-button {
-  height: 36px;
-  box-sizing: border-box;
+  background-color: #293042;
+  color: #e6e6e6;
+  border: 1px solid #3a3f52;
+  padding: 6px 12px;
   margin: 0 5px;
-  background-color: rgb(41, 98, 255);
-  color: white;
-  border: none;
   border-radius: 4px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 13px;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #1e4bd8;
+  background-color: #3a4258;
+  border-color: #4a5169;
 }
 
 .pagination-button:disabled {
-  background-color: rgb(41, 98, 255);
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.7;
 }
 
 .pagination-info {
   margin: 0 15px;
-  font-size: 14px;
-  color: #e6e6e6;
+  color: #8d8d8d;
+  font-size: 13px;
 }
 
-.page-size-selector {
-  margin-left: 20px;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #e6e6e6;
-}
 
-.page-size-selector select {
-  margin: 0 8px;
-  padding: 4px 8px;
-  background-color: #2a3042;
-  color: #e6e6e6;
-  border: 1px solid #3a4157;
-  border-radius: 4px;
-}
 
 .filter-action {
   display: flex;

@@ -1,43 +1,28 @@
 .batch-backtest-page {
-  padding: 60px 0px 100px 0px; /* 上边距60px为导航栏留空间，左右边距为0 */
-  background-color: #1a1a2e;
+  width: 100%;
+  height: calc(100vh - 60px);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  background-color: #171b26;
   color: #e6e6e6;
-  border-radius: 0px; /* 去掉圆角 */
-  box-shadow: none; /* 去掉阴影 */
-  margin: 0px; /* 去掉margin */
-  min-height: calc(100vh - 60px); /* 调整最小高度 */
-  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
 }
-
-/*.page-header {*/
-/*  margin-bottom: 30px;*/
-/*  padding: 0 20px; !* 添加左右内边距 *!*/
-/*}*/
-
-/*.page-header h2 {*/
-/*  font-size: 24px;*/
-/*  margin-bottom: 10px;*/
-/*  color: #e6e6e6;*/
-/*}*/
-
-/*.page-header p {*/
-/*  color: #a0a0a0;*/
-/*  font-size: 14px;*/
-/*}*/
 
 .error-message {
   color: #ff6b6b;
   background-color: rgba(255, 107, 107, 0.1);
   padding: 12px;
   border-radius: 4px;
-  margin: 0 20px 20px 20px; /* 添加左右边距 */
+  margin-bottom: 20px;
 }
 
 .loading-indicator {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px;
+  flex: 1;
   color: #e6e6e6;
   font-size: 16px;
 }
@@ -46,15 +31,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px;
+  flex: 1;
   color: #8d8d8d;
   font-size: 16px;
 }
 
 .batch-table-container {
-  overflow-x: auto;
-  margin: 0 20px 20px 20px; /* 添加左右边距 */
-  max-height: calc(100vh - 300px); /* 限制最大高度，确保分页可见 */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* margin: 0 20px; Removed margin as padding is on container */
 }
 
 .batch-table {
@@ -66,9 +53,11 @@
 
 .batch-table th,
 .batch-table td {
-  padding: 12px 15px;
+  padding: 0 15px;
   text-align: left;
   border-bottom: 1px solid #2a2a3a;
+  height: 50px;
+  box-sizing: border-box;
 }
 
 .batch-table th {
@@ -107,26 +96,18 @@
   background-color: #4a618b;
 }
 
-/* 添加分页样式 - 与策略工厂和历史回测页面保持一致 */
+/* Pagination Styles - Aligned with BacktestSummaryPage */
 .pagination-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #1e2233;
-  border-radius: 4px;
-  width: calc(100% - 40px); /* 考虑父容器的 padding */
+  padding: 15px 0 0 0;
+  background-color: #171b26;
+  border-top: 1px solid #2a2a3a;
+  margin-top: auto;
+  flex-shrink: 0;
+  width: 100%;
   box-sizing: border-box;
-  flex-wrap: wrap;
-  gap: 10px;
-  position: fixed; /* 改为固定定位 */
-  bottom: 20px; /* 距离底部20px */
-  left: 50%;
-  transform: translateX(-50%); /* 水平居中 */
-  z-index: 1000;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
-  max-width: calc(100vw - 80px); /* 最大宽度不超过视窗 */
 }
 
 .pagination-buttons {
@@ -138,57 +119,34 @@
 }
 
 .pagination-button {
-  height: 36px;
-  box-sizing: border-box;
-  margin: 0;
-  background-color: rgb(41, 98, 255);
-  color: white;
-  border: none;
+  background-color: #293042;
+  color: #e6e6e6;
+  border: 1px solid #3a3f52;
+  padding: 6px 12px;
+  margin: 0 5px;
   border-radius: 4px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  min-width: 60px;
+  font-size: 13px;
+  height: auto;
+  min-width: auto;
+  display: inline-block;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #1e4bd8;
+  background-color: #3a4258;
+  border-color: #4a5169;
 }
 
 .pagination-button:disabled {
-  background-color: rgb(41, 98, 255);
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.7;
+  background-color: #293042;
 }
 
 .pagination-info {
-  margin: 0 10px;
-  font-size: 14px;
-  color: #e6e6e6;
+  margin: 0 15px;
+  color: #8d8d8d;
+  font-size: 13px;
   white-space: nowrap;
-}
-
-.page-size-selector {
-  margin-left: 10px;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #e6e6e6;
-  white-space: nowrap;
-}
-
-.page-size-selector select {
-  margin: 0 8px;
-  padding: 4px 8px;
-  background-color: #2a3042;
-  color: #e6e6e6;
-  border: 1px solid #3a4157;
-  border-radius: 4px;
-  font-size: 14px;
 }

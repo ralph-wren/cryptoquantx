@@ -1,11 +1,12 @@
 .backtest-factory-page {
   width: 100%;
-  min-height: 100vh;
-  padding: 0px 0px 80px 0px; /* 调整左右边距为0 */
+  height: 100vh;
+  padding: 0px;
   display: flex;
   flex-direction: column;
   background-color: #171b26;
   color: #e6e6e6;
+  overflow: hidden;
 }
 
 .page-header {
@@ -96,30 +97,6 @@
   gap: 10px;
 }
 
-.page-size-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.page-size-selector span {
-  font-weight: 500;
-  color: #8d8d8d;
-}
-
-.page-size-selector select {
-  padding: 6px;
-  border: 1px solid #2a2a3a;
-  border-radius: 4px;
-  background-color: #16213e;
-  color: #e6e6e6;
-}
-
-.page-size-selector select:focus {
-  outline: none;
-  border-color: #4a9eff;
-}
-
 /* 生成策略按钮样式 */
 .generate-strategy-section {
   display: flex;
@@ -198,9 +175,10 @@
   background-color: #1a1a2e;
   border-radius: 0px; /* 去掉圆角 */
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  overflow: hidden;
-  min-height: 400px;
+  overflow: hidden; /* Prevent scrolling, force fit */
+  min-height: 0; /* Important for flex scrolling */
   margin: 0px; /* 去掉所有边距 */
+  width: 100%;
 }
 
 .strategy-header {
@@ -210,19 +188,27 @@
   border-bottom: 1px solid #2a2a3a;
   font-weight: bold;
   color: #8d8d8d;
+  width: 100%; /* Force fit */
+  box-sizing: border-box;
 }
 
 .strategy-body {
   flex: 1;
-  overflow-y: auto;
-  max-height: calc(100vh - 300px); /* 限制最大高度，确保分页可见 */
+  overflow-y: hidden; /* No vertical scrollbar as per request */
+  overflow-x: hidden; /* No horizontal scrollbar */
+  max-height: none;
+  width: 100%; /* Force fit */
 }
 
 .strategy-row {
   display: flex;
-  padding: 12px 15px;
+  padding: 0 15px;
   border-bottom: 1px solid #2a2a3a;
   color: #e6e6e6;
+  height: 100px; /* Fixed height for adaptive calc */
+  box-sizing: border-box;
+  align-items: center; /* Center vertically */
+  width: 100%; /* Force fit */
 }
 
 .strategy-row:hover {
@@ -237,13 +223,14 @@
   padding: 0 10px;
   display: flex;
   align-items: center;
-  overflow: hidden;
+  /* overflow: hidden; Removed general overflow hidden to prevent clipping of sticky/action elements */
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .strategy-header .strategy-cell {
   cursor: pointer;
+  overflow: hidden; /* Header cells can have overflow hidden */
 }
 
 .strategy-header .strategy-cell:hover {
@@ -251,7 +238,8 @@
 }
 
 .strategy-cell.comments {
-  width: 30%;
+  flex: 1; /* Reduce flex grow */
+  min-width: 0; /* Allow shrinking below content size */
   cursor: pointer;
   white-space: normal;
   line-height: 1.4;
@@ -261,25 +249,32 @@
   padding: 6px 8px;
   word-break: break-word;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3; /* Limit lines */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-height: 5.6em;
+  max-height: 4.2em;
 }
 
 .strategy-cell.name {
-  width: 15%;
+  width: 100px; /* Reduced from 120px */
+  flex-shrink: 0;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .strategy-cell.category {
-  width: 10%;
+  width: 80px;
+  flex-shrink: 0;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .strategy-cell.description {
-  width: 25%;
+  flex: 1; /* Reduce flex grow */
+  min-width: 0; /* Allow shrinking */
   white-space: normal;
   line-height: 1.4;
   color: #d9d9d9;
@@ -289,13 +284,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  max-height: 5.6em;
+  max-height: 4.2em;
 }
 
 .strategy-cell.default-params {
-  width: 15%;
+  flex: 1;
+  min-width: 0; /* Allow shrinking */
   white-space: normal;
   line-height: 1.4;
   overflow: hidden;
@@ -307,24 +303,39 @@
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  max-height: 3.9em;
+  max-height: 4.2em;
 }
 
 .strategy-cell.updated-at {
-  width: 10%;
+  width: 90px; /* Reduced from 100px */
+  flex-shrink: 0;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 12px; /* Smaller font */
 }
 
 .strategy-cell.action {
-  width: 15%;
+  width: 280px; /* Fixed width, no sticky needed */
+  flex-shrink: 0;
   justify-content: center;
+  /* Removed sticky positioning */
+  background-color: transparent;
+  z-index: auto;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.strategy-header .strategy-cell.action {
+  background-color: transparent;
+  z-index: auto;
+  overflow: visible;
 }
 
 .strategy-cell.max-return {
-  width: 8%;
+  width: 80px;
+  flex-shrink: 0;
   text-align: center;
   font-weight: 600;
   white-space: nowrap;
@@ -394,31 +405,22 @@
   color: #8d8d8d;
 }
 
-/* 分页样式 - 与历史回测页面保持一致 */
+/* 分页容器 */
 .pagination-container {
+  margin-top: auto;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #1e2233;
-  border-radius: 4px;
-  width: 100%;
-  box-sizing: border-box;
-  flex-wrap: wrap;
-  gap: 10px;
-  position: sticky;
-  bottom: 0;
-  z-index: 100;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+  padding: 15px 0 20px 0;
+  border-top: 1px solid #2a2a3a;
+  background-color: #171b26;
 }
 
 .pagination-buttons {
   display: flex;
   align-items: center;
   gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
 .pagination-button {
@@ -458,23 +460,7 @@
   white-space: nowrap;
 }
 
-.page-size-selector {
-  margin-left: 10px;
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #e6e6e6;
-  white-space: nowrap;
-}
 
-.page-size-selector select {
-  margin: 0 8px;
-  padding: 4px 8px;
-  background-color: #2a3042;
-  color: #e6e6e6;
-  border: 1px solid #3a4157;
-  border-radius: 4px;
-}
 
 .loading-container, .error-container {
   display: flex;
