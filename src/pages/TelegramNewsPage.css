@@ -1,13 +1,15 @@
 .telegram-news-page {
     padding: 24px;
-    max-width: 98%; /* Increase width usage */
+    max-width: 98%;
     margin: 0 auto;
     color: var(--text-primary);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    /* Force scroll container */
+    /* Use flex layout to fix pagination at bottom */
     height: calc(100vh - 60px);
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     box-sizing: border-box;
+    overflow: hidden; /* Prevent outer scrollbar */
 }
 
 .news-header {
@@ -17,6 +19,7 @@
     margin-bottom: 24px;
     flex-wrap: wrap;
     gap: 16px;
+    flex-shrink: 0; /* Don't shrink header */
 }
 
 .header-left {
@@ -218,6 +221,7 @@
     padding: 12px;
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
+    flex-shrink: 0; /* Don't shrink channels list */
 }
 
 .active-channels .label {
@@ -257,8 +261,11 @@
 .messages-list-view {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding-bottom: 40px; /* Ensure last item isn't cut off */
+    gap: 12px; /* Slightly reduced gap */
+    padding-bottom: 10px;
+    flex: 1; /* Take remaining space */
+    overflow-y: hidden; /* Remove scrollbar as requested */
+    min-height: 0; /* Important for flex child scrolling */
 }
 
 .message-row {
@@ -267,13 +274,14 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px; /* Reduced padding */
     display: flex;
-    gap: 20px;
+    gap: 16px;
     transition: all 0.2s;
     align-items: flex-start;
-    /* Removed fixed height and overflow hidden */
     cursor: pointer;
+    height: 110px; /* Fixed height for adaptive calculation */
+    box-sizing: border-box;
 }
 
 .message-row:hover {
@@ -284,8 +292,8 @@
 
 .message-avatar-container {
     flex-shrink: 0;
-    width: 48px;
-    height: 48px;
+    width: 40px; /* Slightly smaller */
+    height: 40px;
 }
 
 .message-avatar {
@@ -301,27 +309,30 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    gap: 20px;
+    gap: 16px;
+    height: 100%;
+    flex-direction: column; /* Changed to column for better text control */
+    justify-content: center;
 }
 
 .row-meta {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 120px;
-    align-items: flex-start;
+    flex-direction: row; /* Horizontal meta */
+    gap: 12px;
+    align-items: center;
     flex-shrink: 0;
+    margin-bottom: 4px;
 }
 
 .channel-badge {
     font-size: 12px;
     font-weight: 600;
-    padding: 4px 8px;
+    padding: 2px 8px;
     border-radius: 6px;
     background: rgba(76, 175, 80, 0.1);
     color: #4CAF50;
     white-space: nowrap;
-    max-width: 150px; /* Increased for titles */
+    max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -340,14 +351,19 @@
 .row-content {
     flex: 1;
     min-width: 0;
-    /* Removed fixed height and overflow-y */
+    overflow: hidden;
 }
 
 .message-text {
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.5;
     color: rgba(255, 255, 255, 0.9);
     word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limit to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .message-text a {
@@ -361,43 +377,75 @@
     border-bottom-style: solid;
 }
 
-/* Pagination */
-.pagination {
+/* New Pagination Styles (matching Strategy Factory) */
+.pagination-container {
     display: flex;
-    justify-content: center;
+    justify-content: center; /* Center alignment */
     align-items: center;
-    gap: 20px;
-    margin-top: 40px;
-    padding-top: 20px;
+    padding: 15px 0 0 0;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
-.pagination button {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.8);
-    padding: 8px 16px;
-    border-radius: 8px;
+.pagination-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pagination-button {
+    height: 36px;
+    box-sizing: border-box;
+    margin: 0;
+    background-color: rgb(41, 98, 255);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
-    font-size: 14px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    min-width: 60px;
 }
 
-.pagination button:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.2);
+.pagination-button:hover:not(:disabled) {
+    background-color: #1e4bd8;
 }
 
-.pagination button:disabled {
-    opacity: 0.5;
+.pagination-button:disabled {
+    background-color: rgb(41, 98, 255);
     cursor: not-allowed;
+    opacity: 0.7;
 }
 
-.page-info {
+.pagination-info {
+    margin: 0 10px;
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
-    font-family: 'JetBrains Mono', monospace;
+    color: #e6e6e6;
+    white-space: nowrap;
+}
+
+.page-size-selector {
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #e6e6e6;
+    white-space: nowrap;
+}
+
+.page-size-selector select {
+    margin: 0 8px;
+    padding: 4px 8px;
+    background-color: #2a3042;
+    color: #e6e6e6;
+    border: 1px solid #3a4157;
+    border-radius: 4px;
 }
 
 .loading, .error, .no-messages {
@@ -411,4 +459,32 @@
 .error {
     color: #ef5350;
     background: rgba(239, 83, 80, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .pagination-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .pagination-buttons {
+        margin-bottom: 10px;
+        justify-content: center;
+    }
+
+    .pagination-buttons > button {
+        padding: 6px 10px;
+        min-width: 50px;
+    }
+
+    .pagination-info {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .page-size-selector {
+        justify-content: center;
+        margin-top: 10px;
+    }
 }

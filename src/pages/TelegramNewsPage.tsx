@@ -45,7 +45,9 @@ const TelegramNewsPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState<number>(0);
+    const [pageSize, setPageSize] = useState<number>(10);
     const [totalPages, setTotalPages] = useState<number>(0);
+    const [totalElements, setTotalElements] = useState<number>(0);
     const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
     // Search state
@@ -59,13 +61,14 @@ const TelegramNewsPage: React.FC = () => {
         try {
             setLoading(true);
             // Add timestamp to prevent caching
-            const response = await fetch(`/api/telegram/messages?page=${pageNum}&size=20&_t=${new Date().getTime()}`);
+            const response = await fetch(`/api/telegram/messages?page=${pageNum}&size=${pageSize}&_t=${new Date().getTime()}`);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             const data: PageResponse<TelegramMessage> = await response.json();
             setMessages(data.content);
             setTotalPages(data.totalPages);
+            setTotalElements(data.totalElements);
             setPage(data.number);
             setLoading(false);
             setIsRefreshing(false);
@@ -75,7 +78,7 @@ const TelegramNewsPage: React.FC = () => {
             setLoading(false);
             setIsRefreshing(false);
         }
-    }, []);
+    }, [pageSize]);
 
     const fetchChannels = async () => {
         try {
@@ -104,6 +107,36 @@ const TelegramNewsPage: React.FC = () => {
         return () => clearInterval(timer);
     }, [fetchMessages, page]);
 
+    // Adaptive page size calculation
+    useEffect(() => {
+        const calculatePageSize = () => {
+            // Estimate available height: Window - Navbar(60) - Header(~100) - Channels(~60) - Pagination(~52) - Padding(48)
+            // Item height: 110px + 12px gap = 122px
+            // We can refine this by measuring DOM elements if needed, but a conservative estimate works for "filling the page"
+            const headerHeight = document.querySelector('.news-header')?.clientHeight || 100;
+            const channelsHeight = document.querySelector('.active-channels')?.clientHeight || 60;
+            const paginationHeight = 52;
+            const padding = 48;
+            const navbarHeight = 60;
+            
+            const availableHeight = window.innerHeight - navbarHeight - headerHeight - channelsHeight - paginationHeight - padding;
+            const itemHeight = 122; // 110px height + 12px gap
+            
+            const newSize = Math.max(3, Math.floor(availableHeight / itemHeight));
+            
+            setPageSize(prev => {
+                if (prev !== newSize) return newSize;
+                return prev;
+            });
+        };
+
+        calculatePageSize();
+        window.addEventListener('resize', calculatePageSize);
+        
+        // Also recalculate when channels change as it affects layout height
+        return () => window.removeEventListener('resize', calculatePageSize);
+    }, [channels.length]); // Recalculate if channels count changes (height might change)
+
     const handleMessageClick = (msg: TelegramMessage) => {
         if (msg.chatTitle === 'OKX公告' || msg.chatTitle === 'OKX Announcements') {
             // Extract URL from text
@@ -130,8 +163,11 @@ const TelegramNewsPage: React.FC = () => {
     const handlePageChange = (newPage: number) => {
         if (newPage >= 0 && newPage < totalPages) {
             fetchMessages(newPage);
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Scroll to top of list container if needed, but we are removing main scrollbar
+            const listContainer = document.querySelector('.messages-list-view');
+            if (listContainer) {
+                listContainer.scrollTop = 0;
+            }
         }
     };
 
@@ -403,23 +439,41 @@ const TelegramNewsPage: React.FC = () => {
                         )}
                     </div>
 
-                    {totalPages > 1 && (
-                        <div className="pagination">
-                            <button 
-                                disabled={page === 0} 
-                                onClick={() => handlePageChange(page - 1)}
-                            >
-                                上一页
-                            </button>
-                            <span className="page-info">
-                                第 {page + 1} / {totalPages} 页
-                            </span>
-                            <button 
-                                disabled={page >= totalPages - 1} 
-                                onClick={() => handlePageChange(page + 1)}
-                            >
-                                下一页
-                            </button>
+                    {messages.length > 0 && (
+                        <div className="pagination-container">
+                            <div className="pagination-buttons">
+                                <button
+                                    onClick={() => handlePageChange(0)}
+                                    disabled={page === 0}
+                                    className="pagination-button"
+                                >
+                                    首页
+                                </button>
+                                <button
+                                    onClick={() => handlePageChange(page - 1)}
+                                    disabled={page === 0}
+                                    className="pagination-button"
+                                >
+                                    上一页
+                                </button>
+                                <div className="pagination-info">
+                                    {page + 1} / {totalPages} 页 (共 {totalElements} 条记录)
+                                </div>
+                                <button
+                                    onClick={() => handlePageChange(page + 1)}
+                                    disabled={page >= totalPages - 1}
+                                    className="pagination-button"
+                                >
+                                    下一页
+                                </button>
+                                <button
+                                    onClick={() => handlePageChange(totalPages - 1)}
+                                    disabled={page >= totalPages - 1}
+                                    className="pagination-button"
+                                >
+                                    末页
+                                </button>
+                            </div>
                         </div>
                     )}
                 </>
