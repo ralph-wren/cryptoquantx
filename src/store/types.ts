@@ -150,8 +150,12 @@ export interface DateRange {
   endDate: string;
 }
 
+// 市场类型
+export type MarketType = 'crypto' | 'stock';
+
 // 应用状态类型
 export interface AppState {
+  marketType: MarketType; // 市场类型：加密货币或股票
   selectedPair: string;
   timeframe: '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M';
   dateRange: DateRange;

@@ -37,6 +37,7 @@ const savedData = getSavedData();
 
 // 初始状态
 const initialState: AppState = {
+  marketType: savedSettings?.marketType || 'crypto', // 默认为加密货币市场
   selectedPair: savedSettings?.selectedPair || 'BTC-USDT',
   timeframe: savedSettings?.timeframe || '1D',
   dateRange: savedSettings?.dateRange || {
@@ -61,6 +62,12 @@ const initialState: AppState = {
 // Reducer
 const reducer = (state = initialState, action: any): AppState => {
   switch (action.type) {
+    case ActionType.SET_MARKET_TYPE:
+      return {
+        ...state,
+        marketType: action.payload
+      };
+    
     case ActionType.SET_SELECTED_PAIR:
       return {
         ...state,

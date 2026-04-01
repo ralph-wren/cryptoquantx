@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createChart, CrosshairMode, Time, LineWidth, ISeriesApi, IChartApi, SeriesMarkerPosition, SeriesMarker, LineStyle } from 'lightweight-charts';
 import { useSelector, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
-import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
-import { fetchHistoryWithIntegrityCheck, getDefaultDateRange, formatDateTimeString, getYesterdayDateString, fetchAllTickers } from '../../services/api';
+import { AppState, CandlestickData, BacktestTrade, MarketType } from '../../store/types';
+import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange, setMarketType } from '../../store/actions';
+import { fetchHistoryWithIntegrityCheckV2, getDefaultDateRange, formatDateTimeString, getYesterdayDateString, fetchAllTickers } from '../../services/api';
+import { fetchAllStocks } from '../../services/stockApi';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
 import {
@@ -21,6 +22,7 @@ import {
 import './CandlestickChart.css';
 import TradeMarkers from './TradeMarkers';
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
+import { STOCK_MARKETS, StockMarket, getStockMarket, formatStockCode } from '../../constants/stocks';
 import { Link } from 'react-router-dom';
 import QuickTimeSelector from './QuickTimeSelector';
 
@@ -219,9 +221,18 @@ const CandlestickChart: React.FC = () => {
     lastPrice: number;
     priceChangePercent: number;
     volume?: number;
+    name?: string; // 股票名称（仅股票模式使用）
   }>>([]);
   const [searchPair, setSearchPair] = useState<string>('');
   const [isLoadingTickers, setIsLoadingTickers] = useState<boolean>(false);
+  
+  // 添加股票列表状态
+  const [stockList, setStockList] = useState<Array<{
+    code: string;
+    name: string;
+    market: string;
+  }>>([]);
+  const [isLoadingStocks, setIsLoadingStocks] = useState<boolean>(false);
 
   // 添加state来控制下拉列表的显示/隐藏状态
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
@@ -234,6 +245,9 @@ const CandlestickChart: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('volume'); // 默认按交易量排序
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [displayLimit, setDisplayLimit] = useState<number>(20);
+
+  // 股票板块筛选状态
+  const [selectedStockMarket, setSelectedStockMarket] = useState<StockMarket>('all');
 
   const dispatch = useDispatch();
   const location = useLocation();
@@ -250,6 +264,21 @@ const CandlestickChart: React.FC = () => {
   const timeframe = useSelector((state: AppState) => state.timeframe);
   const backtestResults = useSelector((state: AppState) => state.backtestResults);
   const dateRange = useSelector((state: AppState) => state.dateRange);
+  const marketType = useSelector((state: AppState) => state.marketType);
+
+  // 切换市场类型
+  const handleMarketTypeChange = (type: MarketType) => {
+    dispatch(setMarketType(type));
+    // 保存到 localStorage
+    try {
+      const savedSettings = localStorage.getItem(CHART_SETTINGS_KEY);
+      const settings = savedSettings ? JSON.parse(savedSettings) : {};
+      settings.marketType = type;
+      localStorage.setItem(CHART_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('保存市场类型设置失败:', error);
+    }
+  };
 
   // 页面加载时记录恢复状态和强制数据恢复
   useEffect(() => {
@@ -2693,7 +2722,7 @@ const CandlestickChart: React.FC = () => {
       // 注意：API可能需要小写格式，根据实际情况调整
       const normalizedInterval = interval;
 
-      const result = await fetchHistoryWithIntegrityCheck(
+      const result = await fetchHistoryWithIntegrityCheckV2(
         symbol,
         normalizedInterval,
         startDate,
@@ -2752,8 +2781,8 @@ const CandlestickChart: React.FC = () => {
       // 确保时间周期格式正确
       const normalizedTimeframe = timeframe;
 
-      // 使用fetchHistoryWithIntegrityCheck函数，传入标准格式的时间字符串
-      const result = await fetchHistoryWithIntegrityCheck(
+      // 使用fetchHistoryWithIntegrityCheckV2函数，传入标准格式的时间字符串
+      const result = await fetchHistoryWithIntegrityCheckV2(
         selectedPair,
         normalizedTimeframe,
         startTimeStr,
@@ -3339,10 +3368,35 @@ const CandlestickChart: React.FC = () => {
       tickersApiCallInProgress.current = false;
     }
   };
+  
+  // 添加获取股票列表的函数
+  const loadStockList = async () => {
+    try {
+      setIsLoadingStocks(true);
+      console.log('开始获取股票列表...');
+      const stocks = await fetchAllStocks();
+      console.log('获取股票列表成功:', stocks.length);
+      setStockList(stocks.map(stock => ({
+        code: stock.code,
+        name: stock.name,
+        market: stock.market
+      })));
+    } catch (error) {
+      console.error('获取股票列表失败:', error);
+      // 如果API调用失败，使用空列表
+      setStockList([]);
+    } finally {
+      setIsLoadingStocks(false);
+    }
+  };
 
   // 在组件加载时获取所有币种行情
   useEffect(() => {
-    loadAllTickers();
+    if (marketType === 'crypto') {
+      loadAllTickers();
+    } else if (marketType === 'stock') {
+      loadStockList();
+    }
 
     // 每5分钟刷新一次行情数据
     // const tickerInterval = setInterval(() => {
@@ -3364,10 +3418,41 @@ const CandlestickChart: React.FC = () => {
     // };
   }, []);
 
-  // 根据搜索关键词和已加载的行情过滤交易对
-  const filteredPairs = searchPair.trim()
-    ? allTickers.filter(ticker => ticker.symbol.toLowerCase().includes(searchPair.toLowerCase()))
-    : allTickers;
+  // 根据搜索关键词和市场类型过滤交易对/股票
+  const filteredPairs = React.useMemo(() => {
+    if (marketType === 'crypto') {
+      // 加密货币模式：筛选币种
+      return searchPair.trim()
+        ? allTickers.filter(ticker => ticker.symbol.toLowerCase().includes(searchPair.toLowerCase()))
+        : allTickers;
+    } else {
+      // 股票模式：使用从API获取的股票列表
+      let stocks = stockList;
+      
+      // 按板块筛选
+      if (selectedStockMarket !== 'all') {
+        stocks = stocks.filter(stock => stock.market === selectedStockMarket);
+      }
+      
+      // 按搜索词筛选（支持代码和名称）
+      if (searchPair.trim()) {
+        const search = searchPair.toLowerCase();
+        stocks = stocks.filter(stock => 
+          stock.code.toLowerCase().includes(search) ||
+          stock.name.toLowerCase().includes(search)
+        );
+      }
+      
+      // 转换为统一格式
+      return stocks.map(stock => ({
+        symbol: stock.code,
+        lastPrice: 0,
+        priceChangePercent: 0,
+        volume: 0,
+        name: stock.name
+      }));
+    }
+  }, [marketType, searchPair, selectedStockMarket, allTickers, stockList]);
 
   // 根据排序选项对结果进行排序
   const sortedPairs = React.useMemo(() => {
@@ -3481,6 +3566,24 @@ const CandlestickChart: React.FC = () => {
     <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
       <div className="chart-header">
         <div className="chart-selectors">
+          {/* 市场类型切换按钮 */}
+          <div className="selector-group market-type-selector">
+            <div className="market-type-toggle">
+              <button
+                className={`market-type-btn ${marketType === 'crypto' ? 'active' : ''}`}
+                onClick={() => handleMarketTypeChange('crypto')}
+              >
+                加密货币
+              </button>
+              <button
+                className={`market-type-btn ${marketType === 'stock' ? 'active' : ''}`}
+                onClick={() => handleMarketTypeChange('stock')}
+              >
+                股票
+              </button>
+            </div>
+          </div>
+          
           <div className="selector-group">
             <label>交易对:</label>
             <div className="pair-selector-wrapper" ref={dropdownRef}>
@@ -3491,9 +3594,24 @@ const CandlestickChart: React.FC = () => {
 
               {dropdownOpen && (
                 <div className="pair-dropdown">
+                  {/* 股票模式：显示板块筛选器 */}
+                  {marketType === 'stock' && (
+                    <div className="stock-market-filter">
+                      {STOCK_MARKETS.map(market => (
+                        <button
+                          key={market.value}
+                          className={`market-filter-btn ${selectedStockMarket === market.value ? 'active' : ''}`}
+                          onClick={() => setSelectedStockMarket(market.value as StockMarket)}
+                        >
+                          {market.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
                   <input
                     type="text"
-                    placeholder="搜索币种..."
+                    placeholder={marketType === 'crypto' ? '搜索币种...' : '搜索股票代码或名称...'}
                     value={searchPair}
                     onChange={(e) => setSearchPair(e.target.value)}
                     className="pair-search-input"
@@ -3507,7 +3625,7 @@ const CandlestickChart: React.FC = () => {
                         className={`header-item header-item-symbol ${sortBy === 'symbol' ? 'active' : ''}`}
                         onClick={() => handleSortChange('symbol')}
                       >
-                        币种 {sortBy === 'symbol' && (sortDirection === 'desc' ? '↓' : '↑')}
+                        {marketType === 'crypto' ? '币种' : '代码'} {sortBy === 'symbol' && (sortDirection === 'desc' ? '↓' : '↑')}
                       </div>
                     </div>
                     <div className="pair-list-header-right">
@@ -3544,18 +3662,27 @@ const CandlestickChart: React.FC = () => {
                             onClick={() => selectPair(ticker.symbol)}
                           >
                             <div className="pair-item-left">
-                              <div className="pair-item-symbol">{ticker.symbol}</div>
+                              <div className="pair-item-symbol">
+                                {marketType === 'crypto' ? ticker.symbol : formatStockCode(ticker.symbol)}
+                                {marketType === 'stock' && ticker.name && (
+                                  <span className="stock-name"> {ticker.name}</span>
+                                )}
+                              </div>
                             </div>
                             <div className="pair-item-right">
-                              <div className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</div>
-                              <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
-                                {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
-                              </div>
-                              <div className="pair-item-volume">
-                                {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
-                                (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
-                                ticker.volume ? ticker.volume.toFixed(2) : '0'}
-                              </div>
+                              {marketType === 'crypto' && (
+                                <>
+                                  <div className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</div>
+                                  <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
+                                    {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
+                                  </div>
+                                  <div className="pair-item-volume">
+                                    {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
+                                    (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
+                                    ticker.volume ? ticker.volume.toFixed(2) : '0'}
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         ))}

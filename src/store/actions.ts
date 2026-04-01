@@ -5,11 +5,13 @@ import {
   CryptoPair, 
   UserOrder,
   BacktestResults,
-  BacktestSummary
+  BacktestSummary,
+  MarketType
 } from './types';
 
 // Action 类型
 export enum ActionType {
+  SET_MARKET_TYPE = 'SET_MARKET_TYPE',
   SET_SELECTED_PAIR = 'SET_SELECTED_PAIR',
   SET_TIMEFRAME = 'SET_TIMEFRAME',
   SET_DATE_RANGE = 'SET_DATE_RANGE',
@@ -29,6 +31,11 @@ export enum ActionType {
 }
 
 // Action 创建函数
+export const setMarketType = (marketType: MarketType) => ({
+  type: ActionType.SET_MARKET_TYPE,
+  payload: marketType
+});
+
 export const setSelectedPair = (pair: string) => ({
   type: ActionType.SET_SELECTED_PAIR,
   payload: pair

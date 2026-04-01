@@ -1069,3 +1069,99 @@
   min-width: 100px; /* 增加交易量标题宽度 */
   text-align: right;
 }
+
+/* 市场类型切换按钮样式 */
+.market-type-selector {
+  margin-right: 15px;
+}
+
+.market-type-toggle {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.market-type-btn {
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #a0a0a0;
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.market-type-btn:hover {
+  color: #e6e6e6;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.market-type-btn.active {
+  color: #ffffff;
+  background-color: #4CAF50;
+  font-weight: 600;
+}
+
+.market-type-btn.active:hover {
+  background-color: #45a049;
+}
+
+/* 股票板块筛选器样式 */
+.stock-market-filter {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid #2e3241;
+  flex-wrap: wrap;
+  background-color: #1a1d2e;
+}
+
+.market-filter-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a0a0a0;
+  background-color: transparent;
+  border: 1px solid #2e3241;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.market-filter-btn:hover {
+  color: #e6e6e6;
+  border-color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.market-filter-btn.active {
+  color: #ffffff;
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+  font-weight: 600;
+}
+
+/* 股票名称样式 */
+.stock-name {
+  color: #888;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+/* 股票模式下的列表项样式调整 */
+.pair-item-symbol {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}

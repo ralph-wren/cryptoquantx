@@ -1620,3 +1620,110 @@ export const fetchFundData = async (
     };
   }
 };
+
+
+// 判断是否为股票代码
+const isStockSymbol = (symbol: string): boolean => {
+  // 股票代码格式：XXXXXX.SZ 或 XXXXXX.SH
+  return /^\d{6}\.(SZ|SH)$/.test(symbol);
+};
+
+// 获取股票历史K线数据
+export const fetchStockHistoryData = async (
+  symbol: string,
+  interval: string,
+  startDate?: string,
+  endDate?: string
+): Promise<{
+  data: CandlestickData[];
+  message: string;
+}> => {
+  const defaultRange = getDefaultDateRange();
+  const normalizedStartDate = startDate ? normalizeToFullTimeFormat(startDate) : defaultRange.startDate;
+  const normalizedEndDate = endDate ? normalizeToFullTimeFormat(endDate) : getCurrentTimeString();
+
+  try {
+    // 将时间字符串转换为时间戳（毫秒）
+    const startTime = new Date(normalizedStartDate).getTime();
+    const endTime = new Date(normalizedEndDate).getTime();
+
+    // 调用股票K线历史数据接口 - 增加limit到5000
+    const url = `/api/stock/market/kline/history?symbol=${symbol}&interval=${interval}&startTime=${startTime}&endTime=${endTime}&limit=5000`;
+
+    console.log('从股票API获取历史数据:', { 
+      symbol, 
+      interval, 
+      startDate: normalizedStartDate, 
+      endDate: normalizedEndDate, 
+      startTime,
+      endTime,
+      url 
+    });
+
+    const response = await fetch(url);
+    const responseText = await response.text();
+
+    console.log('股票API原始响应:', responseText.substring(0, 500)); // 打印前500个字符
+
+    if (!response.ok) {
+      throw new Error(`API请求失败: ${response.status}`);
+    }
+
+    let apiResponse: any;
+    try {
+      apiResponse = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`解析API响应失败: ${responseText.substring(0, 100)}...`);
+    }
+
+    console.log('股票API解析后响应:', {
+      code: apiResponse.code,
+      message: apiResponse.message,
+      dataLength: apiResponse.data ? apiResponse.data.length : 0,
+      firstItem: apiResponse.data && apiResponse.data.length > 0 ? apiResponse.data[0] : null
+    });
+
+    // 转换股票数据格式
+    let convertedData: CandlestickData[] = [];
+    if (apiResponse.code === 200 && apiResponse.data && Array.isArray(apiResponse.data)) {
+      convertedData = convertApiDataToCandlestickData(apiResponse.data);
+      console.log('股票数据转换完成:', {
+        原始数据条数: apiResponse.data.length,
+        转换后数据条数: convertedData.length
+      });
+    }
+
+    const formattedResponse = JSON.stringify(apiResponse, null, 2);
+
+    return {
+      data: convertedData,
+      message: `股票API响应:\n${formattedResponse}`
+    };
+  } catch (error: any) {
+    console.error('加载股票历史数据失败:', error);
+    throw error;
+  }
+};
+
+// 修改原有的 fetchHistoryWithIntegrityCheck 函数，让它支持股票
+const originalFetchHistoryWithIntegrityCheck = fetchHistoryWithIntegrityCheck;
+
+// 重新导出支持股票的版本
+export const fetchHistoryWithIntegrityCheckV2 = async (
+  symbol: string,
+  interval: string,
+  startDate?: string,
+  endDate?: string
+): Promise<{
+  data: CandlestickData[];
+  message: string;
+}> => {
+  // 判断是股票还是加密货币
+  if (isStockSymbol(symbol)) {
+    // 股票：调用股票API
+    return fetchStockHistoryData(symbol, interval, startDate, endDate);
+  } else {
+    // 加密货币：调用原有API
+    return originalFetchHistoryWithIntegrityCheck(symbol, interval, startDate, endDate);
+  }
+};

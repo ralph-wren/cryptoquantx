@@ -2,11 +2,32 @@
 
 CryptoQuantX是一个专注于加密货币量化交易的专业平台，提供高级K线图表展示、策略回测和实盘交易功能。
 
+## 📁 项目结构
+
+```
+cryptoquantx/
+├── docs/              # 📚 项目文档
+│   ├── README.md      # 文档目录说明
+│   ├── MARKET_TOGGLE_FEATURE.md
+│   ├── STOCK_SELECTOR_IMPLEMENTATION.md
+│   └── ...
+├── src/               # 源代码
+│   ├── components/    # React组件
+│   ├── services/      # API服务
+│   ├── store/         # Redux状态管理
+│   ├── utils/         # 工具函数
+│   └── test/          # 测试代码
+├── public/            # 静态资源
+├── README.md          # 项目主文档
+└── ...
+```
+
 ## 功能特点
 
 - 专业K线图表展示，支持多种技术指标和自定义指标
 - 实时市场数据查询和历史数据加载
 - 交易对和时间周期自由切换
+- 支持加密货币和A股市场切换
 - AI辅助量化交易策略生成与开发
 - 完整的回测系统和批量回测功能
 - 实盘交易接口集成

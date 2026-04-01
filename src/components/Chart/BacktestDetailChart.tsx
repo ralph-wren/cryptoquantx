@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback, useMemo, forwardRef, u
 import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition, HistogramData, LineData } from 'lightweight-charts';
 import { BacktestTradeDetail, CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
-import { fetchHistoryWithIntegrityCheck, fetchBacktestSummary } from '../../services/api';
+import { fetchHistoryWithIntegrityCheckV2, fetchBacktestSummary } from '../../services/api';
 import './BacktestDetailChart.css';
 
 // 扩展Window接口，添加klineDataCache属性
@@ -753,11 +753,11 @@ const BacktestDetailChart = forwardRef<{
         return;
       }
       
-      // 获取K线数据，使用fetchHistoryWithIntegrityCheck函数
+      // 获取K线数据，使用fetchHistoryWithIntegrityCheckV2函数
       console.log('从API获取K线数据:', { symbol, interval: dataInterval, startDate: requestStartDate, endDate: requestEndDate });
       let result;
       try {
-        result = await fetchHistoryWithIntegrityCheck(
+        result = await fetchHistoryWithIntegrityCheckV2(
           symbol,
           dataInterval, // 使用确定的interval值
           requestStartDate, // formatDateString会自动添加 00:00:00

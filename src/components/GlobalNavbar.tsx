@@ -21,7 +21,7 @@ const GlobalNavbar: React.FC = () => {
   // 添加API调用状态跟踪，防止重复调用
   const marketDataApiCallInProgress = useRef<boolean>(false);
 
-  // 主流币种列表
+  // 主流币种列表（加密货币）
   const mainCoins = ['BTC-USDT', 'ETH-USDT', 'XRP-USDT', 'SOL-USDT', 'DOGE-USDT', 'SUI-USDT'];
 
   // 获取行情数据
@@ -35,6 +35,7 @@ const GlobalNavbar: React.FC = () => {
     marketDataApiCallInProgress.current = true;
 
     try {
+      // 获取加密货币行情
       const response = await fetch('/api/market/all_tickers?filter=all&limit=2000');
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -52,7 +53,7 @@ const GlobalNavbar: React.FC = () => {
             priceChange: ticker.priceChange,
             priceChangePercent: ticker.priceChangePercent
           } : null;
-        }).filter((ticker): ticker is TickerData => ticker !== null); // 类型守卫过滤
+        }).filter((ticker): ticker is TickerData => ticker !== null);
 
         setTickers(mainCoinTickers);
       }
@@ -72,7 +73,7 @@ const GlobalNavbar: React.FC = () => {
     const interval = setInterval(fetchMarketData, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, []); // 移除 marketType 依赖
 
   // 格式化价格显示
   const formatPrice = (price: string): string => {
@@ -96,6 +97,7 @@ const GlobalNavbar: React.FC = () => {
     <div className="global-navbar">
       <div className="navbar-left">
         <Logo />
+        
         <Link to="/backtest-summaries" className="nav-link backtest-nav-link">
           历史回测
         </Link>

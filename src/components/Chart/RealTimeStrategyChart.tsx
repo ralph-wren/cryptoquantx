@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useCallback, useMemo, forwardRef, u
 import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition, SeriesMarkerShape, HistogramData, LineData } from 'lightweight-charts';
 import { CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
-import { fetchHistoryWithIntegrityCheck } from '../../services/api';
+import { fetchHistoryWithIntegrityCheckV2 } from '../../services/api';
 import './BacktestDetailChart.css';
 
 // 扩展Window接口，添加klineDataCache属性
@@ -693,7 +693,7 @@ const RealTimeStrategyChart = forwardRef<{
       console.log('从API获取K线数据:', { symbol, interval, startDate: requestStartDate, endDate: requestEndDate });
       let result;
       try {
-        result = await fetchHistoryWithIntegrityCheck(
+        result = await fetchHistoryWithIntegrityCheckV2(
           symbol,
           interval,
           requestStartDate,
