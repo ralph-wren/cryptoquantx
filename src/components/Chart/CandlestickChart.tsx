@@ -275,10 +275,27 @@ const CandlestickChart: React.FC = () => {
       const settings = savedSettings ? JSON.parse(savedSettings) : {};
       settings.marketType = type;
       localStorage.setItem(CHART_SETTINGS_KEY, JSON.stringify(settings));
+      console.log('市场类型已保存到localStorage:', type);
     } catch (error) {
       console.error('保存市场类型设置失败:', error);
     }
   };
+  
+  // 组件初始化时恢复市场类型
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem(CHART_SETTINGS_KEY);
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        if (settings.marketType && settings.marketType !== marketType) {
+          console.log('从localStorage恢复市场类型:', settings.marketType);
+          dispatch(setMarketType(settings.marketType));
+        }
+      }
+    } catch (error) {
+      console.error('恢复市场类型失败:', error);
+    }
+  }, []); // 只在组件挂载时执行一次
 
   // 页面加载时记录恢复状态和强制数据恢复
   useEffect(() => {
@@ -3390,7 +3407,7 @@ const CandlestickChart: React.FC = () => {
     }
   };
 
-  // 在组件加载时获取所有币种行情
+  // 在组件加载时获取所有币种行情或股票列表
   useEffect(() => {
     if (marketType === 'crypto') {
       loadAllTickers();
@@ -3416,7 +3433,11 @@ const CandlestickChart: React.FC = () => {
     //   clearInterval(tickerInterval);
     //   document.removeEventListener('mousedown', handleClickOutside);
     // };
-  }, []);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [marketType]); // 依赖marketType，当市场类型改变时重新加载数据
 
   // 根据搜索关键词和市场类型过滤交易对/股票
   const filteredPairs = React.useMemo(() => {
