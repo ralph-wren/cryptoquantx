@@ -1,226 +1,115 @@
-# 股票选择器实现方案
+# 股票选择器实现文档
 
-## 需求
-当切换到股票模式时：
-1. 交易对下拉菜单显示股票列表而不是加密货币
-2. 支持按板块筛选：全部、主板、创业板、科创板、北交所
-3. 支持搜索股票代码和名称
+## 概述
+在前端首页的回测面板中添加了市场类型切换功能，支持在加密货币和股票之间切换，并实现了股票列表的显示和选择。
 
-## 实现步骤
+## 实现的功能
 
-### 1. 已完成
-- ✅ 创建了 `src/constants/stocks.ts` 定义股票常量和工具函数
-- ✅ 定义了板块类型和常用股票列表
+### 1. 市场类型切换器
+- 添加了"加密货币"和"股票"两个切换按钮
+- 切换市场类型时会自动加载对应的数据列表
+- 市场类型状态保存在 Redux store 中
 
-### 2. 需要修改的文件
+### 2. 股票选择器
+- 点击股票选择器时自动从后端API获取股票列表
+- 优先使用7天缓存（localStorage），缓存不存在时调用后端接口
+- 支持按股票代码或名称搜索
+- 显示股票代码、名称、板块、交易所等信息
 
-#### `src/components/Chart/CandlestickChart.tsx`
+### 3. 数据加载策略
+- **加密货币**: 点击选择器时从 `/api/market/all_tickers` 获取实时数据
+- **股票**: 点击选择器时从 `/api/stock/market/stock/info/list` 获取数据，优先使用本地缓存
 
-需要添加的状态：
-```typescript
-// 股票板块筛选
-const [selectedStockMarket, setSelectedStockMarket] = useState<StockMarket>('all');
+## 修改的文件
 
-// 股票列表（从常量或API获取）
-const [stockList, setStockList] = useState<Array<{
-  code: string;
-  name: string;
-  market: StockMarket;
-}>>([]);
+### 1. `BacktestPanel.tsx`
+- 添加了 `marketType` 状态管理
+- 添加了股票列表相关状态变量：`allStocks`, `filteredStocks`, `isLoadingStocks`
+- 实现了股票列表加载逻辑
+- 添加了市场类型切换UI
+- 实现了股票选择器UI，支持搜索和选择
+
+### 2. `BacktestPanel.css`
+- 添加了市场类型切换器样式 `.market-type-switcher`
+- 添加了股票列表样式 `.stock-list`, `.stock-item`
+- 添加了加载状态样式 `.loading-stocks`
+
+### 3. `stockApi.ts`
+- 已有完整的股票API接口实现
+- 包含缓存逻辑（7天有效期）
+- 提供 `fetchAllStocks()` 方法获取所有股票
+
+### 4. Redux Store
+- `types.ts`: 已定义 `MarketType` 类型和 `marketType` 状态
+- `actions.ts`: 已定义 `setMarketType` action
+- `reducer.ts`: 已实现 `SET_MARKET_TYPE` reducer
+
+## 使用流程
+
+1. 用户打开首页回测面板
+2. 点击"股票"按钮切换到股票模式
+3. 点击股票选择器下拉框
+4. 系统自动加载股票列表（优先使用缓存）
+5. 用户可以搜索或直接选择股票
+6. 选择后股票代码显示在选择器中
+
+## 缓存机制
+
+### 前端缓存（localStorage）
+- 缓存键: `cryptoquantx_stock_list_cache`
+- 过期时间键: `cryptoquantx_stock_list_cache_expiry`
+- 缓存时长: 30天
+- 缓存内容: 完整的股票列表JSON数据
+
+### 后端缓存（Redis Hash）
+- 缓存键: `market:stock:hash`
+- 缓存时长: 7天
+- 数据结构: Hash (key: 股票代码, value: JSON字符串)
+
+## API接口
+
+### 获取股票列表
 ```
+GET /api/stock/market/stock/info/list
+Query参数:
+  - exchange: 交易所（可选，SSE/SZSE）
+  - listStatus: 上市状态（默认L-上市）
 
-需要修改的逻辑：
-1. 在交易对下拉菜单中添加板块筛选器（仅股票模式显示）
-2. 根据 `marketType` 显示不同的列表：
-   - `crypto`: 显示加密货币列表
-   - `stock`: 显示股票列表
-3. 搜索逻辑需要支持股票代码和名称搜索
-4. 筛选逻辑需要支持按板块筛选
-
-#### 修改交易对下拉菜单结构
-
-```tsx
-{dropdownOpen && (
-  <div className="pair-dropdown">
-    {/* 股票模式：显示板块筛选器 */}
-    {marketType === 'stock' && (
-      <div className="stock-market-filter">
-        {STOCK_MARKETS.map(market => (
-          <button
-            key={market.value}
-            className={`market-filter-btn ${selectedStockMarket === market.value ? 'active' : ''}`}
-            onClick={() => setSelectedStockMarket(market.value as StockMarket)}
-          >
-            {market.label}
-          </button>
-        ))}
-      </div>
-    )}
-    
-    {/* 搜索框 */}
-    <input
-      type="text"
-      placeholder={marketType === 'crypto' ? '搜索币种...' : '搜索股票代码或名称...'}
-      value={searchPair}
-      onChange={(e) => setSearchPair(e.target.value)}
-      className="pair-search-input"
-    />
-    
-    {/* 列表 */}
-    <div className="pair-list">
-      {displayedItems.map(item => (
-        <div
-          key={item.symbol}
-          className={`pair-item ${item.symbol === selectedPair ? 'selected' : ''}`}
-          onClick={() => selectPair(item.symbol)}
-        >
-          {/* 根据市场类型显示不同内容 */}
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-```
-
-#### 筛选逻辑
-
-```typescript
-// 根据市场类型和筛选条件过滤列表
-const filteredItems = useMemo(() => {
-  if (marketType === 'crypto') {
-    // 加密货币筛选逻辑（原有逻辑）
-    return allTickers.filter(ticker => 
-      ticker.symbol.toLowerCase().includes(searchPair.toLowerCase())
-    );
-  } else {
-    // 股票筛选逻辑
-    let filtered = COMMON_STOCKS;
-    
-    // 按板块筛选
-    if (selectedStockMarket !== 'all') {
-      filtered = filtered.filter(stock => stock.market === selectedStockMarket);
+返回格式:
+{
+  "code": 200,
+  "message": "success",
+  "data": [
+    {
+      "code": "000001.SZ",
+      "name": "平安银行",
+      "market": "main",
+      "exchange": "SZSE",
+      "industry": "银行",
+      "listDate": "1991-04-03"
     }
-    
-    // 按搜索词筛选
-    if (searchPair) {
-      const search = searchPair.toLowerCase();
-      filtered = filtered.filter(stock => 
-        stock.code.toLowerCase().includes(search) ||
-        stock.name.toLowerCase().includes(search)
-      );
-    }
-    
-    return filtered;
-  }
-}, [marketType, searchPair, selectedStockMarket, allTickers]);
-```
-
-### 3. CSS 样式
-
-需要在 `CandlestickChart.css` 中添加：
-
-```css
-/* 股票板块筛选器 */
-.stock-market-filter {
-  display: flex;
-  gap: 8px;
-  padding: 10px;
-  border-bottom: 1px solid #2e3241;
-  flex-wrap: wrap;
-}
-
-.market-filter-btn {
-  padding: 6px 12px;
-  font-size: 13px;
-  color: #a0a0a0;
-  background-color: transparent;
-  border: 1px solid #2e3241;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.market-filter-btn:hover {
-  color: #e6e6e6;
-  border-color: #4CAF50;
-}
-
-.market-filter-btn.active {
-  color: #ffffff;
-  background-color: #4CAF50;
-  border-color: #4CAF50;
+  ]
 }
 ```
 
-### 4. 数据流程
-
-#### 加密货币模式
+### 获取单个股票信息
 ```
-用户打开下拉菜单
-  ↓
-调用 /api/market/all_tickers 获取币种列表
-  ↓
-显示加密货币列表
-  ↓
-用户搜索/选择
+GET /api/stock/market/stock/info/{code}
+返回格式: 同上，data为单个对象
 ```
 
-#### 股票模式
-```
-用户打开下拉菜单
-  ↓
-显示常用股票列表（COMMON_STOCKS）
-  ↓
-用户选择板块筛选（全部/主板/创业板/科创板/北交所）
-  ↓
-根据板块过滤股票列表
-  ↓
-用户搜索股票代码或名称
-  ↓
-用户选择股票
-```
+## 注意事项
 
-### 5. 未来优化
+1. 股票列表数据量较大（约5000条），使用了缓存机制减少API调用
+2. 前端缓存30天，后端缓存7天，确保数据及时更新
+3. 搜索功能支持股票代码和名称模糊匹配
+4. 切换市场类型时会自动设置默认选中项
+5. 股票代码显示时会去掉 `.SZ` 和 `.SH` 后缀，提升可读性
 
-1. **从后端获取完整股票列表**
-   - 调用 `/api/stock/market/stock/list` 获取所有股票
-   - 需要后端返回股票名称和板块信息
+## 后续优化建议
 
-2. **缓存股票列表**
-   - 将股票列表缓存到 localStorage
-   - 定期更新（每天一次）
-
-3. **显示更多信息**
-   - 股票当前价格
-   - 涨跌幅
-   - 成交量
-
-4. **收藏功能**
-   - 允许用户收藏常用股票
-   - 在列表顶部显示收藏的股票
-
-## 实现优先级
-
-### P0 - 必须实现
-- ✅ 创建股票常量文件
-- ⏳ 修改交易对选择器，支持股票模式
-- ⏳ 添加板块筛选器
-- ⏳ 支持搜索股票代码和名称
-
-### P1 - 重要但不紧急
-- 从后端API获取完整股票列表
-- 显示股票实时价格和涨跌幅
-- 缓存股票列表
-
-### P2 - 可选功能
-- 收藏功能
-- 按涨跌幅排序
-- 按成交量排序
-
-## 测试要点
-
-1. 切换到股票模式，下拉菜单应显示股票列表
-2. 板块筛选器应正常工作
-3. 搜索功能应支持代码和名称
-4. 选择股票后应正确更新 selectedPair
-5. 切换回加密货币模式，应恢复显示币种列表
+1. 添加股票板块筛选（主板、创业板、科创板、北交所）
+2. 添加股票行业筛选
+3. 支持按上市日期排序
+4. 添加股票收藏功能
+5. 显示股票实时价格和涨跌幅（需要对接行情数据源）

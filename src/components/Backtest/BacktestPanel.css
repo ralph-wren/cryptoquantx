@@ -950,3 +950,204 @@
 .sort-options {
   display: none;
 }
+
+/* 市场类型切换器 */
+.market-type-switcher {
+  display: flex;
+  gap: 10px;
+}
+
+.market-type-button {
+  flex: 1;
+  padding: 10px;
+  background-color: #2e3241;
+  border: 1px solid #3a3f51;
+  border-radius: 4px;
+  color: #8d8d8d;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.market-type-button:hover {
+  background-color: #3a3f51;
+  border-color: #4a4f61;
+}
+
+.market-type-button.active {
+  background-color: #2962ff;
+  border-color: #2962ff;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* 时间周期控制器 - 包含选择器、查询按钮和主图指标 */
+.timeframe-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.timeframe-controls select {
+  flex: 1;
+  min-width: 0;
+}
+
+.query-data-button {
+  padding: 10px 16px;
+  background-color: #2962ff;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.query-data-button:hover {
+  background-color: #1e4bd8;
+}
+
+.query-data-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.main-indicator-selector {
+  min-width: 120px;
+  padding: 10px;
+  background-color: #2e3241;
+  border: none;
+  border-radius: 4px;
+  color: #d9d9d9;
+  font-size: 14px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d9d9d9%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px top 50%;
+  background-size: 12px auto;
+  padding-right: 30px;
+}
+
+.main-indicator-selector:hover {
+  background-color: #3a3f51;
+}
+
+/* 股票列表表头 */
+.stock-list-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background-color: #2e3241;
+  border-bottom: 2px solid #3a3f51;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8d8d8d;
+}
+
+.stock-list-header .header-code {
+  min-width: 60px;
+}
+
+.stock-list-header .header-name {
+  flex: 1;
+  min-width: 80px;
+}
+
+.stock-list-header .header-industry {
+  min-width: 80px;
+}
+
+.stock-list-header .header-exchange {
+  min-width: 60px;
+  text-align: center;
+}
+
+/* 股票列表样式 */
+.stock-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.stock-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #2e3241;
+}
+
+.stock-item:hover {
+  background-color: #2e3241;
+}
+
+.stock-item.selected {
+  background-color: #2962ff;
+}
+
+.stock-item-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.stock-item-code {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d9d9d9;
+  font-family: 'Courier New', monospace;
+  min-width: 60px;
+}
+
+.stock-item-name {
+  font-size: 13px;
+  color: #d9d9d9;
+  flex: 1;
+  min-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-item-industry {
+  font-size: 12px;
+  color: #8d8d8d;
+  min-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stock-item.selected .stock-item-name,
+.stock-item.selected .stock-item-industry {
+  color: #ffffff;
+}
+
+.stock-item-exchange {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background-color: #3a3f51;
+  color: #8d8d8d;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
+}
+
+.stock-item.selected .stock-item-exchange {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.loading-stocks {
+  padding: 20px;
+  text-align: center;
+  color: #8d8d8d;
+  font-size: 14px;
+}

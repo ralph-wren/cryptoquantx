@@ -297,6 +297,44 @@ const CandlestickChart: React.FC = () => {
     }
   }, []); // 只在组件挂载时执行一次
 
+  // 监听来自BacktestPanel的查询数据事件
+  useEffect(() => {
+    const handleQueryData = () => {
+      console.log('收到查询数据事件');
+      // 触发数据加载 - 这里可以调用数据加载函数
+      // 由于原来的查询按钮已被移除，我们需要触发DataLoader的数据加载
+      const event = new Event('reload_data');
+      window.dispatchEvent(event);
+    };
+
+    const handleChartDataLoaded = (event: CustomEvent<{ data: CandlestickData[] }>) => {
+      console.log('收到图表数据加载事件，数据条数:', event.detail.data.length);
+      // 直接更新Redux中的数据
+      dispatch(updateCandlestickData(event.detail.data));
+    };
+
+    window.addEventListener('queryChartData', handleQueryData);
+    window.addEventListener('chartDataLoaded', handleChartDataLoaded as EventListener);
+    
+    return () => {
+      window.removeEventListener('queryChartData', handleQueryData);
+      window.removeEventListener('chartDataLoaded', handleChartDataLoaded as EventListener);
+    };
+  }, [dispatch]);
+
+  // 监听来自BacktestPanel的主图指标变更事件
+  useEffect(() => {
+    const handleMainIndicatorChange = (event: CustomEvent<{ indicator: string }>) => {
+      console.log('收到主图指标变更事件:', event.detail.indicator);
+      setMainIndicator(event.detail.indicator as IndicatorType);
+    };
+
+    window.addEventListener('mainIndicatorChange', handleMainIndicatorChange as EventListener);
+    return () => {
+      window.removeEventListener('mainIndicatorChange', handleMainIndicatorChange as EventListener);
+    };
+  }, []);
+
   // 页面加载时记录恢复状态和强制数据恢复
   useEffect(() => {
     // console.log('页面加载完成，当前状态:', {
@@ -3585,239 +3623,6 @@ const CandlestickChart: React.FC = () => {
 
   return (
     <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
-      <div className="chart-header">
-        <div className="chart-selectors">
-          {/* 市场类型切换按钮 */}
-          <div className="selector-group market-type-selector">
-            <div className="market-type-toggle">
-              <button
-                className={`market-type-btn ${marketType === 'crypto' ? 'active' : ''}`}
-                onClick={() => handleMarketTypeChange('crypto')}
-              >
-                加密货币
-              </button>
-              <button
-                className={`market-type-btn ${marketType === 'stock' ? 'active' : ''}`}
-                onClick={() => handleMarketTypeChange('stock')}
-              >
-                股票
-              </button>
-            </div>
-          </div>
-          
-          <div className="selector-group">
-            <label>交易对:</label>
-            <div className="pair-selector-wrapper" ref={dropdownRef}>
-              <div className="selected-pair-display" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                <span>{selectedPair}</span>
-                <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
-              </div>
-
-              {dropdownOpen && (
-                <div className="pair-dropdown">
-                  {/* 股票模式：显示板块筛选器 */}
-                  {marketType === 'stock' && (
-                    <div className="stock-market-filter">
-                      {STOCK_MARKETS.map(market => (
-                        <button
-                          key={market.value}
-                          className={`market-filter-btn ${selectedStockMarket === market.value ? 'active' : ''}`}
-                          onClick={() => setSelectedStockMarket(market.value as StockMarket)}
-                        >
-                          {market.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <input
-                    type="text"
-                    placeholder={marketType === 'crypto' ? '搜索币种...' : '搜索股票代码或名称...'}
-                    value={searchPair}
-                    onChange={(e) => setSearchPair(e.target.value)}
-                    className="pair-search-input"
-                    onClick={(e) => e.stopPropagation()}
-                    autoFocus
-                  />
-
-                  <div className="pair-list-header">
-                    <div className="pair-list-header-left">
-                      <div 
-                        className={`header-item header-item-symbol ${sortBy === 'symbol' ? 'active' : ''}`}
-                        onClick={() => handleSortChange('symbol')}
-                      >
-                        {marketType === 'crypto' ? '币种' : '代码'} {sortBy === 'symbol' && (sortDirection === 'desc' ? '↓' : '↑')}
-                      </div>
-                    </div>
-                    <div className="pair-list-header-right">
-                      <div 
-                        className={`header-item header-item-price ${sortBy === 'price' ? 'active' : ''}`}
-                        onClick={() => handleSortChange('price')}
-                      >
-                        价格 {sortBy === 'price' && (sortDirection === 'desc' ? '↓' : '↑')}
-                      </div>
-                      <div 
-                        className={`header-item header-item-change ${sortBy === 'change' ? 'active' : ''}`}
-                        onClick={() => handleSortChange('change')}
-                      >
-                        涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
-                      </div>
-                      <div 
-                        className={`header-item header-item-volume ${sortBy === 'volume' ? 'active' : ''}`}
-                        onClick={() => handleSortChange('volume')}
-                      >
-                        交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pair-list-container">
-                    {isLoadingTickers ? (
-                      <div className="pairs-loading">加载中...</div>
-                    ) : displayedPairs.length > 0 ? (
-                      <div className="pair-list">
-                        {displayedPairs.map(ticker => (
-                          <div
-                            key={ticker.symbol}
-                            className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
-                            onClick={() => selectPair(ticker.symbol)}
-                          >
-                            <div className="pair-item-left">
-                              <div className="pair-item-symbol">
-                                {marketType === 'crypto' ? ticker.symbol : formatStockCode(ticker.symbol)}
-                                {marketType === 'stock' && ticker.name && (
-                                  <span className="stock-name"> {ticker.name}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="pair-item-right">
-                              {marketType === 'crypto' && (
-                                <>
-                                  <div className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</div>
-                                  <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
-                                    {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
-                                  </div>
-                                  <div className="pair-item-volume">
-                                    {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
-                                    (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
-                                    ticker.volume ? ticker.volume.toFixed(2) : '0'}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-
-                        {displayedPairs.length < filteredPairs.length && (
-                          <div className="load-more-container">
-                            <button className="load-more-button" onClick={loadMorePairs}>
-                              加载更多 ({displayedPairs.length}/{filteredPairs.length})
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="no-results">无匹配结果</div>
-                    )}
-                  </div>
-
-                  <div className="pair-selector-footer">
-                    显示 {displayedPairs.length} / {filteredPairs.length} 币种
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 其余选择器保持不变 */}
-          <div className="selector-group">
-            <label>时间周期:</label>
-            <select
-              className="timeframe-selector"
-              value={timeframe}
-              onChange={handleTimeframeChange}
-            >
-              {TIMEFRAMES.map(tf => (
-                <option key={tf.value} value={tf.value}>{tf.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* 其余部分保持不变 */}
-        <div className="chart-buttons">
-          <div className="date-range-selector">
-            <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
-            <div className="date-input-group">
-              <label>开始日期:</label>
-              <input
-                type="date"
-                className="date-input"
-                value={dateRange.startDate.split(' ')[0]}
-                max={dateRange.endDate.split(' ')[0] < getYesterdayDateString() ? dateRange.endDate.split(' ')[0] : getYesterdayDateString()}
-                onChange={handleStartDateChange}
-              />
-            </div>
-            <div className="date-input-group">
-              <label>结束日期:</label>
-              <input
-                type="date"
-                className="date-input"
-                value={dateRange.endDate.split(' ')[0]}
-                min={dateRange.startDate.split(' ')[0]}
-                max={getYesterdayDateString()}
-                onChange={handleEndDateChange}
-              />
-            </div>
-          </div>
-          <IndicatorSelector
-            type="main"
-            value={mainIndicator}
-            onChange={setMainIndicator}
-            disabled={isLoading || candlestickData.length === 0}
-          />
-          <div className="sub-indicators-selector">
-            <label>副图指标:</label>
-            <div className="checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={isSubIndicatorSelected('macd')}
-                  onChange={() => handleSubIndicatorChange('macd')}
-                  disabled={isLoading || candlestickData.length === 0}
-                />
-                MACD
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={isSubIndicatorSelected('rsi')}
-                  onChange={() => handleSubIndicatorChange('rsi')}
-                  disabled={isLoading || candlestickData.length === 0}
-                />
-                RSI
-              </label>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={isSubIndicatorSelected('kdj')}
-                  onChange={() => handleSubIndicatorChange('kdj')}
-                  disabled={isLoading || candlestickData.length === 0}
-                />
-                KDJ
-              </label>
-            </div>
-          </div>
-          <button className="query-button" onClick={handleQueryClick} disabled={isLoading || isHistoryLoading}>
-            {isLoading ? '查询中...' : '查询数据'}
-          </button>
-          <button className="toggle-panels-button" onClick={togglePanels}>
-            {showPanels ? '隐藏回测面板' : '显示回测面板'}
-          </button>
-        </div>
-      </div>
-
-      {/* 其余部分保持不变 */}
       <div className="chart-container">
         <div className="chart-wrapper">
           <div ref={chartContainerRef} className={`chart-content main-chart ${showPanels ? '' : 'panels-hidden'}`} style={{ minHeight: '400px' }}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState, BacktestResults } from '../../store/types';
-import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRange, clearBacktestResults } from '../../store/actions';
+import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRange, clearBacktestResults, setMarketType } from '../../store/actions';
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
@@ -20,8 +20,11 @@ import {
   fetchBacktestParameters, 
   updateStopLossPercent, 
   updateTrailingProfitPercent,
-  fetchAllTickers  // 添加fetchAllTickers API导入
+  fetchAllTickers,  // 添加fetchAllTickers API导入
+  fetchHistoryWithIntegrityCheck  // 添加数据查询函数
 } from '../../services/api';
+import { fetchAllStocks, StockInfo } from '../../services/stockApi';
+import { formatStockDisplay } from '../../constants/stocks';
 import QuickTimeSelector from '../Chart/QuickTimeSelector';
 
 // 策略接口定义
@@ -56,6 +59,7 @@ const formatVolume = (volume: number | undefined | null): string => {
 
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
+  const marketType = useSelector((state: AppState) => state.marketType);
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
   const timeframe = useSelector((state: AppState) => state.timeframe);
   const isBacktesting = useSelector((state: AppState) => state.isBacktesting);
@@ -96,6 +100,11 @@ const BacktestPanel: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<string>('desc');
   const [displayLimit, setDisplayLimit] = useState<number>(20);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // 股票选择器状态
+  const [allStocks, setAllStocks] = useState<StockInfo[]>([]);
+  const [filteredStocks, setFilteredStocks] = useState<StockInfo[]>([]);
+  const [isLoadingStocks, setIsLoadingStocks] = useState<boolean>(false);
 
   // 当状态变化时更新ref
   useEffect(() => {
@@ -352,14 +361,28 @@ const BacktestPanel: React.FC = () => {
     dispatch(startBacktest());
 
     try {
-      // 直接使用已经正确格式化的时间范围
-      const formattedStartTime = dateRange.startDate;
-      const formattedEndTime = dateRange.endDate;
+      // 确保日期格式包含时间部分
+      const ensureDateTime = (dateStr: string): string => {
+        if (!dateStr) return dateStr;
+        // 如果已经包含时间部分，直接返回
+        if (dateStr.includes(':')) return dateStr;
+        // 如果只有日期部分，添加时间
+        return `${dateStr} 00:00:00`;
+      };
+
+      const formattedStartTime = ensureDateTime(dateRange.startDate);
+      const formattedEndTime = ensureDateTime(dateRange.endDate);
 
       // 构建API URL，添加手续费参数
       const url = `/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True&feeRatio=${feeRatio}`;
 
       console.log('发送回测请求:', url);
+      console.log('日期参数:', { 
+        原始开始: dateRange.startDate, 
+        格式化开始: formattedStartTime,
+        原始结束: dateRange.endDate,
+        格式化结束: formattedEndTime
+      });
 
       // 发送请求
       const response = await fetch(url);
@@ -706,86 +729,170 @@ const BacktestPanel: React.FC = () => {
     }
   };
 
-  // 选择交易对
+  // 交易所代码转中文
+  const getExchangeName = (exchange: string): string => {
+    const exchangeMap: { [key: string]: string } = {
+      'SSE': '上交所',
+      'SZSE': '深交所'
+    };
+    return exchangeMap[exchange] || exchange;
+  };
+
+  // 选择交易对或股票
   const selectPair = (symbol: string) => {
     dispatch(setSelectedPair(symbol));
     setDropdownOpen(false); // 选择后关闭下拉框
   };
 
-  // 加载所有交易对数据
-  useEffect(() => {
-    const loadAllTickers = async () => {
-      setIsLoadingTickers(true);
-      try {
-        // 使用fetchAllTickers API获取实际数据
-        const result = await fetchAllTickers();
-        if (result.success && result.data) {
-          // 格式化数据，确保数值类型正确
-          const formattedTickers = result.data.map((ticker: any) => ({
-            symbol: ticker.symbol,
-            lastPrice: parseFloat(ticker.lastPrice || 0),
-            priceChangePercent: parseFloat(ticker.priceChangePercent || 0),
-            volume: parseFloat(ticker.quoteVolume || ticker.volume || 0) // 优先使用quoteVolume
-          }));
-          
-          setAllTickers(formattedTickers);
-          
-          // 默认按交易量排序
-          const sorted = [...formattedTickers].sort((a, b) => {
-            const volumeA = a.volume || 0;
-            const volumeB = b.volume || 0;
-            return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
-          });
-          
-          setSortedPairs(sorted);
-          setFilteredPairs(sorted);
-          setDisplayedPairs(sorted.slice(0, displayLimit));
-        } else {
-          console.error('加载交易对数据失败:', result.message);
-        }
-      } catch (error) {
-        console.error('加载交易对数据失败:', error);
-      } finally {
-        setIsLoadingTickers(false);
-      }
-    };
+  // 打开下拉框时加载数据
+  const handleDropdownToggle = () => {
+    console.log('=== handleDropdownToggle 被调用 ===');
+    const newState = !dropdownOpen;
+    console.log('当前 dropdownOpen:', dropdownOpen, '-> 新状态:', newState);
+    console.log('当前 marketType:', marketType);
     
-    loadAllTickers();
-  }, [sortBy, sortDirection]);
+    setDropdownOpen(newState);
+    
+    if (newState) {
+      console.log('下拉框打开，准备加载数据...');
+      // 打开下拉框时加载数据
+      if (marketType === 'crypto') {
+        console.log('调用 loadAllTickers');
+        loadAllTickers();
+      } else if (marketType === 'stock') {
+        console.log('调用 loadAllStocks');
+        loadAllStocks();
+      } else {
+        console.log('未知的 marketType:', marketType);
+      }
+    } else {
+      console.log('下拉框关闭');
+    }
+    console.log('=== handleDropdownToggle 执行完成 ===');
+  };
 
-  // 处理搜索交易对
-  useEffect(() => {
-    if (allTickers.length === 0) return;
+  // 加载加密货币交易对数据（仅在打开下拉框时加载）
+  const loadAllTickers = async () => {
+    if (allTickers.length > 0) return; // 已加载过，不重复加载
     
-    const filtered = allTickers.filter(ticker => 
-      ticker.symbol.toLowerCase().includes(searchPair.toLowerCase())
-    );
-    
-    // 应用排序
-    const sorted = [...filtered].sort((a, b) => {
-      if (sortBy === 'volume') {
-        const volumeA = parseFloat(a.volume) || 0;
-        const volumeB = parseFloat(b.volume) || 0;
-        return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
-      } else if (sortBy === 'change') {
-        const changeA = parseFloat(a.priceChangePercent) || 0;
-        const changeB = parseFloat(b.priceChangePercent) || 0;
-        return sortDirection === 'desc' ? changeB - changeA : changeA - changeB;
-      } else if (sortBy === 'price') {
-        const priceA = parseFloat(a.lastPrice) || 0;
-        const priceB = parseFloat(b.lastPrice) || 0;
-        return sortDirection === 'desc' ? priceB - priceA : priceA - priceB;
-      } else if (sortBy === 'name') {
-        return sortDirection === 'desc' 
-          ? b.symbol.localeCompare(a.symbol)
-          : a.symbol.localeCompare(b.symbol);
+    setIsLoadingTickers(true);
+    try {
+      const result = await fetchAllTickers();
+      if (result.success && result.data) {
+        const formattedTickers = result.data.map((ticker: any) => ({
+          symbol: ticker.symbol,
+          lastPrice: parseFloat(ticker.lastPrice || 0),
+          priceChangePercent: parseFloat(ticker.priceChangePercent || 0),
+          volume: parseFloat(ticker.quoteVolume || ticker.volume || 0)
+        }));
+        
+        setAllTickers(formattedTickers);
+        
+        // 默认按交易量排序
+        const sorted = [...formattedTickers].sort((a, b) => {
+          const volumeA = a.volume || 0;
+          const volumeB = b.volume || 0;
+          return volumeB - volumeA;
+        });
+        
+        setSortedPairs(sorted);
+        setFilteredPairs(sorted);
+        setDisplayedPairs(sorted.slice(0, displayLimit));
+        console.log(`加载加密货币交易对成功: ${formattedTickers.length} 条`);
+      } else {
+        console.error('加载交易对数据失败:', result.message);
       }
-      return 0;
-    });
+    } catch (error) {
+      console.error('加载交易对数据失败:', error);
+    } finally {
+      setIsLoadingTickers(false);
+    }
+  };
+
+  // 加载股票列表（仅在打开下拉框时加载）
+  const loadAllStocks = async () => {
+    console.log('=== loadAllStocks 开始执行 ===');
+    console.log('当前 allStocks.length:', allStocks.length);
+    console.log('当前 marketType:', marketType);
     
-    setFilteredPairs(sorted);
-    setDisplayedPairs(sorted.slice(0, displayLimit));
-  }, [searchPair, allTickers, sortBy, sortDirection, displayLimit]);
+    if (allStocks.length > 0) {
+      console.log('股票列表已存在，跳过加载');
+      return; // 已加载过，不重复加载
+    }
+    
+    setIsLoadingStocks(true);
+    console.log('开始调用 fetchAllStocks API...');
+    try {
+      const stocks = await fetchAllStocks(true); // 使用缓存
+      console.log('fetchAllStocks 返回数据:', stocks.length, '条');
+      console.log('前3条股票数据:', stocks.slice(0, 3));
+      setAllStocks(stocks);
+      setFilteredStocks(stocks);
+      console.log(`加载股票列表成功: ${stocks.length} 条`);
+    } catch (error) {
+      console.error('加载股票列表失败:', error);
+    } finally {
+      setIsLoadingStocks(false);
+      console.log('=== loadAllStocks 执行完成 ===');
+    }
+  };
+
+  // 处理搜索和排序
+  useEffect(() => {
+    console.log('搜索过滤 useEffect 触发, marketType:', marketType, 'allStocks.length:', allStocks.length, 'searchPair:', searchPair);
+    
+    if (marketType === 'crypto') {
+      if (allTickers.length === 0) return;
+      
+      const filtered = allTickers.filter(ticker => 
+        ticker.symbol.toLowerCase().includes(searchPair.toLowerCase())
+      );
+      
+      // 应用排序
+      const sorted = [...filtered].sort((a, b) => {
+        if (sortBy === 'volume') {
+          const volumeA = parseFloat(a.volume) || 0;
+          const volumeB = parseFloat(b.volume) || 0;
+          return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
+        } else if (sortBy === 'change') {
+          const changeA = parseFloat(a.priceChangePercent) || 0;
+          const changeB = parseFloat(b.priceChangePercent) || 0;
+          return sortDirection === 'desc' ? changeB - changeA : changeA - changeB;
+        } else if (sortBy === 'price') {
+          const priceA = parseFloat(a.lastPrice) || 0;
+          const priceB = parseFloat(b.lastPrice) || 0;
+          return sortDirection === 'desc' ? priceB - priceA : priceA - priceB;
+        } else if (sortBy === 'name') {
+          return sortDirection === 'desc' 
+            ? b.symbol.localeCompare(a.symbol)
+            : a.symbol.localeCompare(b.symbol);
+        }
+        return 0;
+      });
+      
+      setFilteredPairs(sorted);
+      setDisplayedPairs(sorted.slice(0, displayLimit));
+    } else if (marketType === 'stock') {
+      if (allStocks.length === 0) {
+        console.log('股票列表为空，跳过过滤');
+        return;
+      }
+      
+      const filtered = allStocks.filter(stock => 
+        stock.code.toLowerCase().includes(searchPair.toLowerCase()) ||
+        stock.name.toLowerCase().includes(searchPair.toLowerCase())
+      );
+      
+      console.log('股票过滤结果:', filtered.length, '条');
+      setFilteredStocks(filtered);
+    }
+  }, [searchPair, allTickers, allStocks, sortBy, sortDirection, displayLimit, marketType]);
+
+  // 切换市场类型时清空搜索和关闭下拉框
+  useEffect(() => {
+    setSearchPair('');
+    setDropdownOpen(false);
+  }, [marketType]);
 
   // 点击外部关闭下拉框
   useEffect(() => {
@@ -989,14 +1096,46 @@ const BacktestPanel: React.FC = () => {
             </div>
 
             <div className="input-group">
-              <label>交易对</label>
+              <label>市场类型</label>
+              <div className="market-type-switcher">
+                <button
+                  className={`market-type-button ${marketType === 'crypto' ? 'active' : ''}`}
+                  onClick={() => {
+                    dispatch(setMarketType('crypto'));
+                    dispatch(setSelectedPair('BTC-USDT'));
+                  }}
+                >
+                  加密货币
+                </button>
+                <button
+                  className={`market-type-button ${marketType === 'stock' ? 'active' : ''}`}
+                  onClick={() => {
+                    dispatch(setMarketType('stock'));
+                    // 设置默认股票代码
+                    if (allStocks.length > 0) {
+                      dispatch(setSelectedPair(allStocks[0].code));
+                    }
+                  }}
+                >
+                  股票
+                </button>
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label>{marketType === 'crypto' ? '交易对' : '股票代码'}</label>
               <div className="pair-selector-wrapper" ref={dropdownRef}>
-                <div className="selected-pair-display" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                  <span>{selectedPair}</span>
+                <div className="selected-pair-display" onClick={handleDropdownToggle}>
+                  <span>
+                    {marketType === 'crypto' 
+                      ? selectedPair 
+                      : formatStockDisplay(selectedPair, allStocks.find(s => s.code === selectedPair)?.name)
+                    }
+                  </span>
                   <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
                 </div>
 
-                {dropdownOpen && (
+                {dropdownOpen && marketType === 'crypto' && (
                   <div className="pairs-dropdown">
                     <input
                       type="text"
@@ -1070,16 +1209,112 @@ const BacktestPanel: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                {dropdownOpen && marketType === 'stock' && (
+                  <div className="pairs-dropdown">
+                    <input
+                      type="text"
+                      placeholder="搜索股票代码或名称..."
+                      value={searchPair}
+                      onChange={(e) => setSearchPair(e.target.value)}
+                      className="pair-search-input"
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+
+                    <div className="stock-list-header">
+                      <span className="header-code">代码</span>
+                      <span className="header-name">名称</span>
+                      <span className="header-industry">行业</span>
+                      <span className="header-exchange">交易所</span>
+                    </div>
+
+                    <div className="pair-list-container" onScroll={handlePairsScroll}>
+                      {isLoadingStocks ? (
+                        <div className="loading-stocks">加载股票列表中...</div>
+                      ) : filteredStocks.length > 0 ? (
+                        <div className="pair-list stock-list">
+                          {filteredStocks.slice(0, 100).map(stock => (
+                            <div
+                              key={stock.code}
+                              className={`pair-item stock-item ${stock.code === selectedPair ? 'selected' : ''}`}
+                              onClick={() => selectPair(stock.code)}
+                            >
+                              <div className="stock-item-info">
+                                <span className="stock-item-code">{stock.code.replace('.SZ', '').replace('.SH', '')}</span>
+                                <span className="stock-item-name">{stock.name}</span>
+                                <span className="stock-item-industry">{stock.industry || '-'}</span>
+                                <span className="stock-item-exchange">{getExchangeName(stock.exchange)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="no-results">无匹配结果</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="input-group">
               <label>时间周期</label>
-              <select value={timeframe} onChange={handleTimeframeChange}>
-                {TIMEFRAMES.map((tf) => (
-                  <option key={tf.value} value={tf.value}>{tf.label}</option>
-                ))}
-              </select>
+              <div className="timeframe-controls">
+                <select value={timeframe} onChange={handleTimeframeChange}>
+                  {TIMEFRAMES.map((tf) => (
+                    <option key={tf.value} value={tf.value}>{tf.label}</option>
+                  ))}
+                </select>
+                <button 
+                  className="query-data-button"
+                  onClick={async () => {
+                    // 直接调用API获取数据
+                    try {
+                      console.log('开始查询数据...', { selectedPair, timeframe, dateRange });
+                      const result = await fetchHistoryWithIntegrityCheck(
+                        selectedPair,
+                        timeframe,
+                        dateRange.startDate,
+                        dateRange.endDate
+                      );
+                      
+                      if (result.data && result.data.length > 0) {
+                        console.log('数据查询成功，条数:', result.data.length);
+                        // 触发数据更新事件
+                        const event = new CustomEvent('chartDataLoaded', {
+                          detail: { data: result.data }
+                        });
+                        window.dispatchEvent(event);
+                      } else {
+                        console.warn('查询返回空数据');
+                        alert('未查询到数据，请检查交易对和时间范围');
+                      }
+                    } catch (error) {
+                      console.error('查询数据失败:', error);
+                      alert('查询数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+                    }
+                  }}
+                  type="button"
+                >
+                  查询数据
+                </button>
+                <select 
+                  className="main-indicator-selector"
+                  onChange={(e) => {
+                    // 触发主图指标变更事件
+                    const event = new CustomEvent('mainIndicatorChange', {
+                      detail: { indicator: e.target.value }
+                    });
+                    window.dispatchEvent(event);
+                  }}
+                  defaultValue="boll"
+                >
+                  <option value="none">无指标</option>
+                  <option value="boll">布林带(BOLL)</option>
+                  <option value="sar">抛物线(SAR)</option>
+                </select>
+              </div>
             </div>
             
             {/* 新增止损百分比设置 */}

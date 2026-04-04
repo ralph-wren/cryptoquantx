@@ -42,6 +42,15 @@ const getStockListFromCache = (): StockInfo[] | null => {
     }
     
     const stockList = JSON.parse(cachedData);
+    
+    // 如果缓存的是空数组，清除缓存并返回null
+    if (!Array.isArray(stockList) || stockList.length === 0) {
+      console.log('缓存的股票列表为空，清除缓存');
+      localStorage.removeItem(STOCK_LIST_CACHE_KEY);
+      localStorage.removeItem(CACHE_EXPIRY_KEY);
+      return null;
+    }
+    
     console.log(`从缓存获取股票列表: ${stockList.length} 条`);
     return stockList;
   } catch (error) {
@@ -55,6 +64,12 @@ const getStockListFromCache = (): StockInfo[] | null => {
  */
 const saveStockListToCache = (stockList: StockInfo[]): void => {
   try {
+    // 只缓存非空数组
+    if (!Array.isArray(stockList) || stockList.length === 0) {
+      console.log('股票列表为空，不缓存');
+      return;
+    }
+    
     const expiryTime = Date.now() + CACHE_DURATION;
     localStorage.setItem(STOCK_LIST_CACHE_KEY, JSON.stringify(stockList));
     localStorage.setItem(CACHE_EXPIRY_KEY, expiryTime.toString());
@@ -94,14 +109,22 @@ export const fetchStockInfoList = async (
     console.log('获取股票列表:', url);
 
     const response = await fetch(url);
+    console.log('API响应状态:', response.status, response.statusText);
+    
     if (!response.ok) {
       throw new Error(`API请求失败: ${response.status}`);
     }
 
     const apiResponse: ApiResponse<StockInfo[]> = await response.json();
+    console.log('API响应数据:', apiResponse);
+    console.log('API响应 code:', apiResponse.code);
+    console.log('API响应 data 类型:', typeof apiResponse.data);
+    console.log('API响应 data 是否为数组:', Array.isArray(apiResponse.data));
+    console.log('API响应 data 长度:', apiResponse.data?.length);
     
     if (apiResponse.code === 200 && apiResponse.data) {
       console.log(`获取股票列表成功: ${apiResponse.data.length} 条`);
+      console.log('前3条数据:', apiResponse.data.slice(0, 3));
       
       // 只有获取全部股票时才缓存
       if (!exchange) {
@@ -110,10 +133,16 @@ export const fetchStockInfoList = async (
       
       return apiResponse.data;
     } else {
+      console.error('API返回错误:', apiResponse);
       throw new Error(apiResponse.message || '获取股票列表失败');
     }
   } catch (error) {
     console.error('获取股票列表失败:', error);
+    console.error('错误详情:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      url: `/api/stock/market/stock/info/list?listStatus=${listStatus}${exchange ? `&exchange=${exchange}` : ''}`
+    });
     
     // 如果API调用失败，尝试返回缓存数据（即使可能过期）
     if (useCache && !exchange) {
