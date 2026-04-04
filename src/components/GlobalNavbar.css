@@ -94,27 +94,43 @@
 }
 
 .batch-backtest-link {
-  background-color: #ff9800;
+  background-color: #e91e63;
 }
 
 .batch-backtest-link:hover {
-  background-color: #fb8c00;
+  background-color: #d81b60;
 }
 
 .real-time-strategy-link {
-  background-color: #9c27b0;
+  background-color: #e91e63;
 }
 
 .real-time-strategy-link:hover {
-  background-color: #8e24aa;
+  background-color: #d81b60;
+}
+
+.fund-center-link {
+  background-color: #e91e63;
+}
+
+.fund-center-link:hover {
+  background-color: #d81b60;
+}
+
+.telegram-news-link {
+  background-color: #e91e63;
+}
+
+.telegram-news-link:hover {
+  background-color: #d81b60;
 }
 
 .indicator-distribution-link {
-  background-color: #2196F3;
+  background-color: #e91e63;
 }
 
 .indicator-distribution-link:hover {
-  background-color: #1976D2;
+  background-color: #d81b60;
 }
 
 /* 行情组件样式 */

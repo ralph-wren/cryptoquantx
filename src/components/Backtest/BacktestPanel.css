@@ -109,16 +109,20 @@
 
 .run-backtest-button {
   width: 100%;
-  padding: 10px;
+  height: 44px;
+  padding: 0 12px;
   background-color: #2962ff;
   border: none;
   border-radius: 4px;
   color: white;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .run-backtest-button:hover {
@@ -132,16 +136,20 @@
 
 .run-batch-backtest-button {
   width: 100%;
-  padding: 10px;
+  height: 44px;
+  padding: 0 12px;
   background-color: #2962ff;
   border: none;
   border-radius: 4px;
   color: white;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-top: 10px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .run-batch-backtest-button:hover {
@@ -518,16 +526,20 @@
 
 .create-realtime-strategy-button {
   width: 100%;
-  padding: 10px;
+  height: 44px;
+  padding: 0 12px;
   background-color: #2962ff;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   margin-top: 0;
   transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .create-realtime-strategy-button:hover {
@@ -860,7 +872,8 @@
 }
 
 .input-with-button .update-button {
-  padding: 10px 12px;
+  height: 36px;
+  padding: 0 12px;
   background-color: #2962ff;
   border: none;
   border-radius: 0 4px 4px 0;
@@ -871,6 +884,9 @@
   transition: all 0.2s ease;
   white-space: nowrap;
   min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .input-with-button .update-button:hover:not(:disabled) {
@@ -1037,7 +1053,8 @@
 }
 
 .query-data-button {
-  padding: 10px 16px;
+  height: 36px;
+  padding: 0 16px;
   background-color: #2962ff;
   border: none;
   border-radius: 4px;
@@ -1047,6 +1064,9 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .query-data-button:hover {

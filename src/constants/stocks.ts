@@ -53,5 +53,5 @@ export function formatStockCode(code: string): string {
 // 格式化股票显示名称
 export function formatStockDisplay(code: string, name?: string): string {
   const formattedCode = formatStockCode(code);
-  return name ? `${formattedCode} ${name}` : formattedCode;
+  return name ? `${name} ${formattedCode}` : formattedCode;
 }

@@ -894,6 +894,27 @@ const BacktestPanel: React.FC = () => {
     setDropdownOpen(false);
   }, [marketType]);
 
+  // 初始化时如果是股票市场，自动加载股票列表
+  useEffect(() => {
+    if (marketType === 'stock' && allStocks.length === 0) {
+      console.log('初始化：检测到股票市场，自动加载股票列表');
+      const loadStocks = async () => {
+        setIsLoadingStocks(true);
+        try {
+          const stocks = await fetchAllStocks(true);
+          console.log('初始化加载股票列表成功:', stocks.length, '条');
+          setAllStocks(stocks);
+          setFilteredStocks(stocks);
+        } catch (error) {
+          console.error('初始化加载股票列表失败:', error);
+        } finally {
+          setIsLoadingStocks(false);
+        }
+      };
+      loadStocks();
+    }
+  }, [marketType]); // 当marketType变化时触发
+
   // 点击外部关闭下拉框
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -957,7 +978,15 @@ const BacktestPanel: React.FC = () => {
   return (
     <div className="backtest-panel">
       <div className="backtest-panel-header">
-        <h3>{selectedPair}</h3>
+        <h3>
+          {marketType === 'crypto' 
+            ? selectedPair 
+            : (() => {
+                const stock = allStocks.find(s => s.code === selectedPair);
+                return stock ? `${stock.name} ${stock.code.replace('.SZ', '').replace('.SH', '')}` : selectedPair;
+              })()
+          }
+        </h3>
         <div className="backtest-info">
            <div className="info-row">
              <span className="info-item">
@@ -1175,9 +1204,20 @@ const BacktestPanel: React.FC = () => {
                 <label>时间周期</label>
                 <div className="timeframe-controls">
                   <select value={timeframe} onChange={handleTimeframeChange}>
-                    {TIMEFRAMES.map((tf) => (
-                      <option key={tf.value} value={tf.value}>{tf.label}</option>
-                    ))}
+                    {TIMEFRAMES
+                      .filter(tf => {
+                        // 股票模式下只显示Tushare支持的周期
+                        if (marketType === 'stock') {
+                          const supportedStockIntervals = ['1m', '5m', '15m', '30m', '1H', '1D'];
+                          return supportedStockIntervals.includes(tf.value);
+                        }
+                        // 加密货币模式显示所有周期
+                        return true;
+                      })
+                      .map((tf) => (
+                        <option key={tf.value} value={tf.value}>{tf.label}</option>
+                      ))
+                    }
                   </select>
                   <button 
                     className="query-data-button"

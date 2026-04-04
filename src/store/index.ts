@@ -25,15 +25,27 @@ if (savedBacktestResults) {
   store.dispatch({ type: 'FINISH_BACKTEST', payload: savedBacktestResults });
 }
 
-// 订阅store变化，保存回测结果到localStorage
+// 订阅store变化，保存回测结果和设置到localStorage
 store.subscribe(() => {
   try {
-    const { backtestResults } = store.getState();
+    const state = store.getState();
+    const { backtestResults, marketType, selectedPair, timeframe, dateRange } = state;
+    
+    // 保存回测结果
     if (backtestResults) {
       localStorage.setItem('backtest_results', JSON.stringify(backtestResults));
     }
+    
+    // 保存图表设置（包括市场类型和选中的交易对）
+    const chartSettings = {
+      marketType,
+      selectedPair,
+      timeframe,
+      dateRange
+    };
+    localStorage.setItem('cryptoquantx_chart_settings', JSON.stringify(chartSettings));
   } catch (error) {
-    console.error('Failed to save backtest results to localStorage:', error);
+    console.error('Failed to save to localStorage:', error);
   }
 });
 

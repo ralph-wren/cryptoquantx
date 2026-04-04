@@ -5,28 +5,38 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .confirm-modal-content {
-  background-color: #1e222d;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #1e222d 0%, #252936 100%);
+  border-radius: 16px;
   width: 90%;
-  max-width: 420px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
   overflow: hidden;
-  animation: modalSlideIn 0.3s ease-out;
+  animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
+    transform: translateY(-30px) scale(0.9);
   }
   to {
     opacity: 1;
@@ -38,36 +48,45 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid #2e3241;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
 }
 
 .confirm-modal-title {
   margin: 0;
-  color: #d9d9d9;
-  font-size: 18px;
+  color: #ffffff;
+  font-size: 20px;
   font-weight: 600;
+  letter-spacing: -0.3px;
 }
 
 .confirm-modal-close {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #a0a0a0;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px 10px;
   line-height: 1;
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .confirm-modal-close:hover {
-  color: #d9d9d9;
-  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
 }
 
 .confirm-modal-body {
-  padding: 24px;
+  padding: 28px;
   display: flex;
   align-items: flex-start;
 }
@@ -92,9 +111,9 @@
 
 .confirm-modal-message {
   margin: 0;
-  color: #d9d9d9;
+  color: #e0e0e0;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.6;
   flex: 1;
   white-space: pre-line;
 }
@@ -105,87 +124,96 @@
   border-collapse: collapse;
   color: #d9d9d9;
   margin: 0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .batch-result-table td {
-  padding: 6px 10px;
-  border: 1px solid #2e3241;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .batch-result-table tr td:first-child {
-  font-weight: 500;
+  font-weight: 600;
   width: 40%;
   text-align: right;
-  background-color: #2e3241;
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #b0b0b0;
 }
 
 .batch-result-table tr td:last-child {
   width: 60%;
   text-align: left;
+  font-weight: 500;
+  color: #ffffff;
 }
 
 .confirm-modal-footer {
-  padding: 16px 24px 24px;
+  padding: 20px 28px 28px;
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0%, transparent 100%);
 }
 
 .confirm-modal-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 80px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 90px;
+  letter-spacing: 0.3px;
 }
 
 .confirm-modal-btn-cancel {
-  background-color: #2e3241;
+  background-color: rgba(255, 255, 255, 0.08);
   color: #d9d9d9;
-  border: 1px solid #404654;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .confirm-modal-btn-cancel:hover {
-  background-color: #404654;
-  border-color: #525866;
+  background-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .confirm-modal-btn-confirm {
   color: white;
   font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .confirm-modal-btn-confirm.danger {
-  background-color: #ff4757;
+  background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
 }
 
 .confirm-modal-btn-confirm.danger:hover {
-  background-color: #ff3742;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+  background: linear-gradient(135deg, #ff3742 0%, #ff2838 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
 }
 
 .confirm-modal-btn-confirm.warning {
-  background-color: #ffa502;
+  background: linear-gradient(135deg, #ffa502 0%, #ff9500 100%);
 }
 
 .confirm-modal-btn-confirm.warning:hover {
-  background-color: #ff9500;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 165, 2, 0.3);
+  background: linear-gradient(135deg, #ff9500 0%, #ff8500 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 165, 2, 0.4);
 }
 
 .confirm-modal-btn-confirm.info {
-  background-color: #3742fa;
+  background: linear-gradient(135deg, #2962ff 0%, #1e4bd8 100%);
 }
 
 .confirm-modal-btn-confirm.info:hover {
-  background-color: #2f3542;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(55, 66, 250, 0.3);
+  background: linear-gradient(135deg, #1e4bd8 0%, #1a3fb8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(41, 98, 255, 0.4);
 }
 
 /* 响应式设计 */
@@ -213,13 +241,14 @@
 
 /* 失败策略按钮样式 */
 .confirm-modal-btn-failed {
-  background-color: #dc2626;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: white;
   font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .confirm-modal-btn-failed:hover {
-  background-color: #b91c1c;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
 }
