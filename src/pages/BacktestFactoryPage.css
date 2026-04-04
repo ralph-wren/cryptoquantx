@@ -205,13 +205,14 @@
 
 .strategy-row {
   display: flex;
-  padding: 0 15px;
+  padding: 14px 15px;
   border-bottom: 1px solid #2a2a3a;
   color: #e6e6e6;
-  height: 100px; /* Fixed height for adaptive calc */
+  min-height: 90px;
   box-sizing: border-box;
-  align-items: center; /* Center vertically */
-  width: 100%; /* Force fit */
+  align-items: center;
+  width: 100%;
+  transition: background-color 0.2s ease;
 }
 
 .strategy-row:hover {
@@ -222,136 +223,118 @@
   border-bottom: none;
 }
 
+/* 策略单元格统一样式 */
 .strategy-cell {
-  padding: 0 10px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
-  /* overflow: hidden; Removed general overflow hidden to prevent clipping of sticky/action elements */
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 14px; /* 增大字体 */
+  color: #d9d9d9;
+  line-height: 1.5;
 }
 
 .strategy-header .strategy-cell {
   cursor: pointer;
-  overflow: hidden; /* Header cells can have overflow hidden */
+  font-size: 14px; /* 增大表头字体 */
+  font-weight: 600;
+  color: #8d8d8d;
 }
 
 .strategy-header .strategy-cell:hover {
   background-color: #1e1e30;
 }
 
+/* 策略名称列 */
+.strategy-cell.name {
+  width: 150px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 评价列 - 最宽 */
 .strategy-cell.comments {
-  flex: 1; /* Reduce flex grow */
-  min-width: 0; /* Allow shrinking below content size */
+  flex: 2.5;
+  min-width: 250px;
   cursor: pointer;
   white-space: normal;
-  line-height: 1.4;
-  color: #d9d9d9;
-  font-size: 14px;
   overflow-wrap: break-word;
-  padding: 6px 8px;
   word-break: break-word;
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* Limit lines */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-height: 4.2em;
+  max-height: 4.5em;
 }
 
-.strategy-cell.name {
-  width: 100px; /* Reduced from 120px */
-  flex-shrink: 0;
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* 分类列 */
 .strategy-cell.category {
-  width: 80px;
+  width: 110px;
   flex-shrink: 0;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* 描述列 */
 .strategy-cell.description {
-  flex: 1; /* Reduce flex grow */
-  min-width: 0; /* Allow shrinking */
+  flex: 2;
+  min-width: 200px;
   white-space: normal;
-  line-height: 1.4;
-  color: #d9d9d9;
-  font-size: 14px;
   overflow-wrap: break-word;
-  padding: 6px 8px;
+  word-break: break-word;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  max-height: 4.2em;
+  max-height: 4.5em;
 }
 
+/* 默认参数列 */
 .strategy-cell.default-params {
-  flex: 1;
-  min-width: 0; /* Allow shrinking */
+  flex: 1.2;
+  min-width: 140px;
   white-space: normal;
-  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #d9d9d9;
-  font-size: 14px;
-  overflow-wrap: break-word;
-  padding: 6px 8px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-  max-height: 4.2em;
+  max-height: 4.5em;
 }
 
+/* 更新时间列 */
 .strategy-cell.updated-at {
-  width: 90px; /* Reduced from 100px */
+  width: 150px;
   flex-shrink: 0;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px; /* Smaller font */
+  font-size: 13px;
 }
 
+/* 操作列 */
 .strategy-cell.action {
-  width: 280px; /* Fixed width, no sticky needed */
+  width: 280px;
   flex-shrink: 0;
   justify-content: center;
-  /* Removed sticky positioning */
+  gap: 6px;
   background-color: transparent;
-  z-index: auto;
-  box-shadow: none;
   overflow: visible;
 }
 
 .strategy-header .strategy-cell.action {
   background-color: transparent;
-  z-index: auto;
   overflow: visible;
-}
-
-.strategy-cell.max-return {
-  width: 80px;
-  flex-shrink: 0;
-  text-align: center;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.strategy-cell.max-return.positive {
-  color: #ff5252 !important;  /* 红涨 */
-}
-
-.strategy-cell.max-return.negative {
-  color: #4caf50 !important;  /* 绿跌 */
 }
 
 .sort-indicator {
@@ -359,24 +342,21 @@
 }
 
 .code-btn, .view-btn, .update-btn, .delete-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 8px 14px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin-right: 5px;
-  font-size: 13px;
-  font-weight: 400;
-  min-width: 56px;
-  max-width: 56px;
-  height: 28px;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 64px;
+  height: 36px;
   white-space: nowrap;
   transition: all 0.2s ease;
   text-align: center;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .code-btn {
@@ -384,9 +364,22 @@
   color: white;
 }
 
+.code-btn:hover {
+  background-color: #138496;
+}
+
 .view-btn {
   background-color: #2962ff;
   color: white;
+}
+
+.view-btn:hover:not(:disabled) {
+  background-color: #1e4bd8;
+}
+
+.view-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .update-btn {
@@ -394,9 +387,17 @@
   color: white;
 }
 
+.update-btn:hover {
+  background-color: #1976d2;
+}
+
 .delete-btn {
   background-color: #ff4757;
   color: white;
+}
+
+.delete-btn:hover {
+  background-color: #e63946;
 }
 
 .no-results {

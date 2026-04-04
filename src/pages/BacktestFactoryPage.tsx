@@ -864,17 +864,6 @@ const BacktestFactoryPage: React.FC = () => {
         <div className="strategy-cell description">描述</div>
         <div className="strategy-cell default-params">默认参数</div>
         <div
-          className="strategy-cell max-return"
-          onClick={() => handleSort('max_return')}
-        >
-          最高收益率
-          {sortField === 'max_return' && (
-            <span className="sort-indicator">
-              {sortDirection === 'asc' ? '↑' : '↓'}
-            </span>
-          )}
-        </div>
-        <div
           className="strategy-cell updated-at"
           onClick={() => handleSort('updated_at')}
         >
@@ -912,17 +901,6 @@ const BacktestFactoryPage: React.FC = () => {
       formattedParams = "参数解析失败";
     }
 
-    // 使用接口返回的best_return字段
-    const bestReturn = strategy.best_return !== undefined ? strategy.best_return : 0;
-    const bestReturnDisplay = `${(bestReturn * 100).toFixed(2)}%`;
-    
-    // 根据收益率设置样式
-    const bestReturnClass = bestReturn > 0 
-      ? 'positive' 
-      : bestReturn < 0 
-        ? 'negative' 
-        : '';
-
     return (
       <div key={strategyCode} className="strategy-row">
         <div className="strategy-cell name">{strategy.name}</div>
@@ -930,7 +908,6 @@ const BacktestFactoryPage: React.FC = () => {
         <div className="strategy-cell category">{strategy.category}</div>
         <div className="strategy-cell description">{strategy.description}</div>
         <div className="strategy-cell default-params">{formattedParams}</div>
-        <div className={`strategy-cell max-return ${bestReturnClass}`}>{bestReturnDisplay}</div>
         <div className="strategy-cell updated-at">
           {strategy.update_time ? new Date(strategy.update_time).toLocaleString('zh-CN', {
             year: 'numeric',
