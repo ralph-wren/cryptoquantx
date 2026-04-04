@@ -428,6 +428,38 @@ const BacktestPanel: React.FC = () => {
         };
 
         dispatch(finishBacktest(results));
+        
+        // 回测成功后，自动更新K线图的时间范围为回测使用的时间范围
+        console.log('回测成功，更新K线图时间范围:', { 
+          startDate: formattedStartTime, 
+          endDate: formattedEndTime 
+        });
+        
+        // 更新Redux中的日期范围
+        dispatch(setDateRange(formattedStartTime, formattedEndTime));
+        
+        // 重新加载K线数据
+        try {
+          const klineResult = await fetchHistoryWithIntegrityCheck(
+            selectedPair,
+            timeframe,
+            formattedStartTime,
+            formattedEndTime
+          );
+          
+          if (klineResult.data && klineResult.data.length > 0) {
+            console.log('K线数据重新加载成功，条数:', klineResult.data.length);
+            const event = new CustomEvent('chartDataLoaded', {
+              detail: { data: klineResult.data }
+            });
+            window.dispatchEvent(event);
+          } else {
+            console.warn('K线数据重新加载返回空数据');
+          }
+        } catch (klineError) {
+          console.error('重新加载K线数据失败:', klineError);
+          // 不影响回测结果的显示，只是K线图可能不会更新
+        }
       } else {
         throw new Error(data.data?.errorMessage || data.message || '回测失败');
       }
@@ -1176,7 +1208,11 @@ const BacktestPanel: React.FC = () => {
                 </div>
               </div>
 
-              <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
+              <QuickTimeSelector 
+                onTimeRangeSelect={handleQuickTimeSelect}
+                currentStartDate={dateRange.startDate}
+                currentEndDate={dateRange.endDate}
+              />
 
               <div className="input-row">
                 <div className="input-group half-width">

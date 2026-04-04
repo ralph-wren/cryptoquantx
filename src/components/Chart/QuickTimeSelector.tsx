@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './QuickTimeSelector.css';
 import { getCurrentTimeString, getTodayDateString } from '../../services/api';
 
 interface QuickTimeSelectorProps {
   onTimeRangeSelect: (startDate: string, endDate: string) => void;
+  currentStartDate?: string; // 当前选中的开始日期
+  currentEndDate?: string;   // 当前选中的结束日期
 }
 
-const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect }) => {
+const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ 
+  onTimeRangeSelect,
+  currentStartDate,
+  currentEndDate 
+}) => {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
   // 计算指定时间前的日期（仅日期部分）
   const getDateBefore = (months: number): string => {
     const date = new Date();
@@ -26,7 +34,44 @@ const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect
     { label: '5年', months: 60 }
   ];
 
-  const handleQuickSelect = (months: number, isToday = false) => {
+  // 根据当前日期范围判断选中的选项
+  useEffect(() => {
+    if (!currentStartDate) {
+      setSelectedOption(null);
+      return;
+    }
+
+    const startDateOnly = currentStartDate.split(' ')[0];
+    const today = getTodayDateString();
+
+    // 检查是否是"今天"
+    if (startDateOnly === today) {
+      setSelectedOption('今天');
+      return;
+    }
+
+    // 检查其他时间范围（允许1天的误差）
+    for (const option of timeOptions) {
+      if (!option.isToday) {
+        const expectedDate = getDateBefore(option.months);
+        const startDate = new Date(startDateOnly);
+        const expectedDateObj = new Date(expectedDate);
+        const diffDays = Math.abs((startDate.getTime() - expectedDateObj.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 1) {
+          setSelectedOption(option.label);
+          return;
+        }
+      }
+    }
+
+    // 如果不匹配任何预设选项，清除选中状态
+    setSelectedOption(null);
+  }, [currentStartDate, currentEndDate]);
+
+  const handleQuickSelect = (months: number, isToday = false, label: string) => {
+    setSelectedOption(label);
+    
     if (isToday) {
       // 今天：开始时间是今天00:00:00，结束时间是当前精确时间
       const startDate = `${getTodayDateString()} 00:00:00`;
@@ -46,8 +91,8 @@ const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect
         {timeOptions.map(option => (
           <button
             key={option.label}
-            className="quick-time-button"
-            onClick={() => handleQuickSelect(option.months, option.isToday)}
+            className={`quick-time-button ${selectedOption === option.label ? 'active' : ''}`}
+            onClick={() => handleQuickSelect(option.months, option.isToday, option.label)}
             type="button"
           >
             {option.label}
