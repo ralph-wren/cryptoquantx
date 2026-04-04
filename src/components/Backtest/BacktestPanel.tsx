@@ -1256,9 +1256,10 @@ const BacktestPanel: React.FC = () => {
                   <select value={timeframe} onChange={handleTimeframeChange}>
                     {TIMEFRAMES
                       .filter(tf => {
-                        // 股票模式下只显示Tushare支持的周期
+                        // 股票模式下只显示Tushare支持的周期（日线、周线、月线）
+                        // 分钟线需要更高权限，暂不支持
                         if (marketType === 'stock') {
-                          const supportedStockIntervals = ['1m', '5m', '15m', '30m', '1H', '1D'];
+                          const supportedStockIntervals = ['1D', '1W', '1M'];
                           return supportedStockIntervals.includes(tf.value);
                         }
                         // 加密货币模式显示所有周期
