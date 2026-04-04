@@ -1130,10 +1130,9 @@
   text-align: center;
 }
 
-/* 股票列表样式 */
+/* 股票列表样式 - 移除内部滚动，使用外层容器的滚动 */
 .stock-list {
-  max-height: 400px;
-  overflow-y: auto;
+  /* 移除 max-height 和 overflow-y，让外层 pair-list-container 控制滚动 */
 }
 
 .stock-item {

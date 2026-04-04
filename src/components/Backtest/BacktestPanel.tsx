@@ -105,6 +105,10 @@ const BacktestPanel: React.FC = () => {
   const [allStocks, setAllStocks] = useState<StockInfo[]>([]);
   const [filteredStocks, setFilteredStocks] = useState<StockInfo[]>([]);
   const [isLoadingStocks, setIsLoadingStocks] = useState<boolean>(false);
+  const [stockDisplayLimit, setStockDisplayLimit] = useState<number>(50); // 股票列表显示数量限制
+  
+  // K线数据加载状态
+  const [isLoadingChartData, setIsLoadingChartData] = useState<boolean>(false);
 
   // 当状态变化时更新ref
   useEffect(() => {
@@ -744,8 +748,12 @@ const BacktestPanel: React.FC = () => {
   const handlePairsScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     // 当滚动到底部附近时（距离底部20px以内），加载更多数据
-    if (scrollHeight - scrollTop - clientHeight < 20 && !isLoadingTickers && displayedPairs.length < sortedPairs.length) {
-      setDisplayLimit(prevLimit => prevLimit + 20);
+    if (scrollHeight - scrollTop - clientHeight < 20) {
+      if (marketType === 'crypto' && !isLoadingTickers && displayedPairs.length < sortedPairs.length) {
+        setDisplayLimit(prevLimit => prevLimit + 20);
+      } else if (marketType === 'stock' && !isLoadingStocks && stockDisplayLimit < filteredStocks.length) {
+        setStockDisplayLimit(prevLimit => prevLimit + 50);
+      }
     }
   };
 
@@ -888,7 +896,7 @@ const BacktestPanel: React.FC = () => {
           return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
         } else if (sortBy === 'change') {
           const changeA = parseFloat(a.priceChangePercent) || 0;
-          const changeB = parseFloat(b.priceChangePercent) || 0;
+          const changeB = parseFloat(a.priceChangePercent) || 0;
           return sortDirection === 'desc' ? changeB - changeA : changeA - changeB;
         } else if (sortBy === 'price') {
           const priceA = parseFloat(a.lastPrice) || 0;
@@ -903,7 +911,8 @@ const BacktestPanel: React.FC = () => {
       });
       
       setFilteredPairs(sorted);
-      setDisplayedPairs(sorted.slice(0, displayLimit));
+      // 搜索或排序时重置显示数量
+      setDisplayLimit(20);
     } else if (marketType === 'stock') {
       if (allStocks.length === 0) {
         console.log('股票列表为空，跳过过滤');
@@ -917,13 +926,17 @@ const BacktestPanel: React.FC = () => {
       
       console.log('股票过滤结果:', filtered.length, '条');
       setFilteredStocks(filtered);
+      // 搜索时重置显示数量
+      setStockDisplayLimit(50);
     }
-  }, [searchPair, allTickers, allStocks, sortBy, sortDirection, displayLimit, marketType]);
+  }, [searchPair, allTickers, allStocks, sortBy, sortDirection, marketType]);
 
   // 切换市场类型时清空搜索和关闭下拉框
   useEffect(() => {
     setSearchPair('');
     setDropdownOpen(false);
+    setStockDisplayLimit(50); // 重置股票显示数量
+    setDisplayLimit(20); // 重置加密货币显示数量
   }, [marketType]);
 
   // 初始化时如果是股票市场，自动加载股票列表
@@ -1128,10 +1141,12 @@ const BacktestPanel: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="pair-list-container">
-                        {filteredPairs.length > 0 ? (
+                      <div className="pair-list-container" onScroll={handlePairsScroll}>
+                        {isLoadingTickers ? (
+                          <div className="loading-stocks">加载交易对列表中...</div>
+                        ) : filteredPairs.length > 0 ? (
                           <div className="pair-list">
-                            {filteredPairs.map(ticker => (
+                            {filteredPairs.slice(0, displayLimit).map(ticker => (
                               <div
                                 key={ticker.symbol}
                                 className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
@@ -1155,7 +1170,6 @@ const BacktestPanel: React.FC = () => {
                         ) : (
                           <div className="no-results">无匹配结果</div>
                         )}
-                        {isLoadingTickers && <div className="load-more-indicator">加载更多...</div>}
                       </div>
                     </div>
                   )}
@@ -1184,7 +1198,7 @@ const BacktestPanel: React.FC = () => {
                           <div className="loading-stocks">加载股票列表中...</div>
                         ) : filteredStocks.length > 0 ? (
                           <div className="pair-list stock-list">
-                            {filteredStocks.slice(0, 100).map(stock => (
+                            {filteredStocks.slice(0, stockDisplayLimit).map(stock => (
                               <div
                                 key={stock.code}
                                 className={`pair-item stock-item ${stock.code === selectedPair ? 'selected' : ''}`}
@@ -1260,6 +1274,12 @@ const BacktestPanel: React.FC = () => {
                     onClick={async () => {
                       try {
                         console.log('开始查询数据...', { selectedPair, timeframe, dateRange });
+                        setIsLoadingChartData(true); // 开始加载
+                        
+                        // 触发K线图的加载状态
+                        const loadingEvent = new CustomEvent('chartDataLoading', { detail: { loading: true } });
+                        window.dispatchEvent(loadingEvent);
+                        
                         const result = await fetchHistoryWithIntegrityCheck(
                           selectedPair,
                           timeframe,
@@ -1276,15 +1296,24 @@ const BacktestPanel: React.FC = () => {
                         } else {
                           console.warn('查询返回空数据');
                           alert('未查询到数据，请检查交易对和时间范围');
+                          // 结束加载状态
+                          const loadingEndEvent = new CustomEvent('chartDataLoading', { detail: { loading: false } });
+                          window.dispatchEvent(loadingEndEvent);
                         }
                       } catch (error) {
                         console.error('查询数据失败:', error);
                         alert('查询数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+                        // 结束加载状态
+                        const loadingEndEvent = new CustomEvent('chartDataLoading', { detail: { loading: false } });
+                        window.dispatchEvent(loadingEndEvent);
+                      } finally {
+                        setIsLoadingChartData(false); // 结束加载
                       }
                     }}
                     type="button"
+                    disabled={isLoadingChartData}
                   >
-                    查询数据
+                    {isLoadingChartData ? '加载中...' : '查询数据'}
                   </button>
                   <select 
                     className="main-indicator-selector"

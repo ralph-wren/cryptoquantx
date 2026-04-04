@@ -301,23 +301,32 @@ const CandlestickChart: React.FC = () => {
   useEffect(() => {
     const handleQueryData = () => {
       console.log('收到查询数据事件');
+      setIsLoading(true); // 开始加载
       // 触发数据加载 - 这里可以调用数据加载函数
       // 由于原来的查询按钮已被移除，我们需要触发DataLoader的数据加载
       const event = new Event('reload_data');
       window.dispatchEvent(event);
     };
 
+    const handleChartDataLoading = (event: CustomEvent<{ loading: boolean }>) => {
+      console.log('收到图表数据加载状态事件:', event.detail.loading);
+      setIsLoading(event.detail.loading);
+    };
+
     const handleChartDataLoaded = (event: CustomEvent<{ data: CandlestickData[] }>) => {
       console.log('收到图表数据加载事件，数据条数:', event.detail.data.length);
       // 直接更新Redux中的数据
       dispatch(updateCandlestickData(event.detail.data));
+      setIsLoading(false); // 结束加载
     };
 
     window.addEventListener('queryChartData', handleQueryData);
+    window.addEventListener('chartDataLoading', handleChartDataLoading as EventListener);
     window.addEventListener('chartDataLoaded', handleChartDataLoaded as EventListener);
     
     return () => {
       window.removeEventListener('queryChartData', handleQueryData);
+      window.removeEventListener('chartDataLoading', handleChartDataLoading as EventListener);
       window.removeEventListener('chartDataLoaded', handleChartDataLoaded as EventListener);
     };
   }, [dispatch]);
@@ -3675,13 +3684,13 @@ const CandlestickChart: React.FC = () => {
             }}
           >
             <div className="tooltip-row">
-              <span className="tooltip-label">时间:</span>
+              <span className="tooltip-label">开盘时间:</span>
+              <span className="tooltip-value">{hoveredData.openTime || '未知'}</span>
+            </div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">收盘时间:</span>
               <span className="tooltip-value">{hoveredData.time}</span>
             </div>
-            {/*<div className="tooltip-row">*/}
-            {/*  <span className="tooltip-label">开盘时间:</span>*/}
-            {/*  <span className="tooltip-value">{hoveredData.openTime || '未知'}</span>*/}
-            {/*</div>*/}
             <div className="tooltip-row">
               <span className="tooltip-label">开盘:</span>
               <span className="tooltip-value">{hoveredData.open}</span>
