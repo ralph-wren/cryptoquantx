@@ -6,6 +6,7 @@
   height: calc(100vh - 90px); /* 填充整个页面，与图表高度保持一致 */
   display: flex;
   flex-direction: column;
+  overflow-y: hidden; /* 禁用滚动条 */
 }
 
 .backtest-panel-header {
@@ -58,8 +59,8 @@
 
 .backtest-panel-content {
   flex: 1;
-  padding: 15px 15px 5px 15px;
-  overflow-y: auto;
+  padding: 10px;
+  overflow-y: auto; /* 启用滚动以确保所有内容可见 */
 }
 
 /* 回测表单 */
@@ -69,12 +70,12 @@
 }
 
 .backtest-form .input-group {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .backtest-form label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   color: #6c7284;
   font-size: 12px;
 }
@@ -82,7 +83,7 @@
 .backtest-form input,
 .backtest-form select {
   width: 100%;
-  padding: 10px;
+  padding: 8px;
   background-color: #2e3241;
   border: none;
   border-radius: 4px;
@@ -107,16 +108,17 @@
 }
 
 .run-backtest-button {
-  padding: 12px;
+  width: 100%;
+  padding: 10px;
   background-color: #2962ff;
   border: none;
   border-radius: 4px;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .run-backtest-button:hover {
@@ -129,19 +131,21 @@
 }
 
 .run-batch-backtest-button {
-  padding: 12px;
-  background-color: #ff9800;
+  width: 100%;
+  padding: 10px;
+  background-color: #2962ff;
   border: none;
   border-radius: 4px;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-top: 10px;
 }
 
 .run-batch-backtest-button:hover {
-  background-color: #fb8c00;
+  background-color: #1e4bd8;
 }
 
 .run-batch-backtest-button:disabled {
@@ -513,26 +517,27 @@
 }
 
 .create-realtime-strategy-button {
-  padding: 10px 20px;
-  background-color: #9c27b0;
+  width: 100%;
+  padding: 10px;
+  background-color: #2962ff;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
-  margin-top: 10px;
-  width: 100%;
-  transition: background-color 0.3s ease;
+  margin-top: 0;
+  transition: background-color 0.2s ease;
 }
 
 .create-realtime-strategy-button:hover {
-  background-color: #7b1fa2;
+  background-color: #1e4bd8;
 }
 
 .create-realtime-strategy-button:disabled {
   background-color: #666;
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 /* 修改交易对选择器样式 */
@@ -887,6 +892,44 @@
   margin-bottom: 5px;
   color: #6c7284;
   font-size: 13px;
+}
+
+/* 表单区块样式 */
+.form-section {
+  margin-bottom: 12px;
+  padding: 10px;
+  background-color: rgba(46, 50, 65, 0.3);
+  border-radius: 6px;
+  border: 1px solid #2e3241;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  margin: 0 0 10px 0;
+  padding-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #d9d9d9;
+  border-bottom: 2px solid #2962ff;
+}
+
+/* 横向输入框布局 */
+.input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.input-row .input-group {
+  margin-bottom: 0;
+}
+
+.half-width {
+  flex: 1;
+  min-width: 0;
 }
 
 .pair-list-header {

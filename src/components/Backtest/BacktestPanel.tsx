@@ -981,109 +981,162 @@ const BacktestPanel: React.FC = () => {
       <div className="backtest-panel-content">
         {!backtestResults ? (
           <div className="backtest-form">
-            <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
+            {/* ========== 数据查询区 ========== */}
+            <div className="form-section">
+              <h4 className="section-title">数据查询</h4>
+              
+              <div className="input-group">
+                <label>市场类型</label>
+                <div className="market-type-switcher">
+                  <button
+                    className={`market-type-button ${marketType === 'crypto' ? 'active' : ''}`}
+                    onClick={() => {
+                      dispatch(setMarketType('crypto'));
+                      dispatch(setSelectedPair('BTC-USDT'));
+                    }}
+                  >
+                    加密货币
+                  </button>
+                  <button
+                    className={`market-type-button ${marketType === 'stock' ? 'active' : ''}`}
+                    onClick={() => {
+                      dispatch(setMarketType('stock'));
+                      if (allStocks.length > 0) {
+                        dispatch(setSelectedPair(allStocks[0].code));
+                      }
+                    }}
+                  >
+                    股票
+                  </button>
+                </div>
+              </div>
 
-            <div className="input-group">
-              <label>开始日期</label>
-              <input
-                type="date"
-                value={dateRange.startDate.split(' ')[0]}
-                max={getYesterdayDateString()}
-                onChange={handleStartDateChange}
-              />
-            </div>
-
-            <div className="input-group">
-              <label>结束日期</label>
-              <input
-                type="date"
-                value={dateRange.endDate.split(' ')[0]}
-                max={getYesterdayDateString()}
-                onChange={handleEndDateChange}
-              />
-            </div>
-
-            <div className="input-group">
-              <label>初始资金 (USDT)</label>
-              <input
-                type="number"
-                value={initialCapital}
-                onChange={(e) => setInitialCapital(e.target.value)}
-                min="100"
-                step="100"
-              />
-            </div>
-
-            <div className="input-group">
-              <label>手续费率</label>
-              <input
-                type="number"
-                value={feeRatio}
-                onChange={(e) => setFeeRatio(e.target.value)}
-                min="0"
-                max="0.01"
-                step="0.0001"
-                placeholder="例如：0.001 表示 0.1%"
-              />
-            </div>
-
-            <div className="input-group">
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span>投资金额 (USDT) - 用于执行实盘策略金额</span>
-                <span style={{ fontSize: '12px', color: '#4caf50', marginLeft: '8px' }}>
-                  {loadingBalance ? '加载中...' : accountBalance !== null ? `可用: ${accountBalance.toFixed(2)} USDT` : ''}
-                </span>
-              </label>
-              <input
-                type="number"
-                value={tradeAmount}
-                onChange={(e) => setTradeAmount(e.target.value)}
-                min="1"
-                step="1"
-                placeholder="用于实时策略的单次交易金额"
-              />
-            </div>
-
-            <div className="input-group">
-              <label>交易策略</label>
-              {loading ? (
-                <div className="loading-strategies">加载策略中...</div>
-              ) : error ? (
-                <div className="error-message">策略加载失败，请刷新重试</div>
-              ) : (
-                <div className="strategy-selector-wrapper" ref={strategyDropdownRef}>
-                  <div className="selected-strategy-display" onClick={() => setStrategyDropdownOpen(!strategyDropdownOpen)}>
-                    <span>{strategies[strategy]?.name || '选择策略'}</span>
-                    <span className="dropdown-arrow">{strategyDropdownOpen ? '▲' : '▼'}</span>
+              <div className="input-group">
+                <label>{marketType === 'crypto' ? '交易对' : '股票代码'}</label>
+                <div className="pair-selector-wrapper" ref={dropdownRef}>
+                  <div className="selected-pair-display" onClick={handleDropdownToggle}>
+                    <span>
+                      {marketType === 'crypto' 
+                        ? selectedPair 
+                        : formatStockDisplay(selectedPair, allStocks.find(s => s.code === selectedPair)?.name)
+                      }
+                    </span>
+                    <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
                   </div>
 
-                  {strategyDropdownOpen && (
-                    <div className="strategy-dropdown">
+                  {dropdownOpen && marketType === 'crypto' && (
+                    <div className="pairs-dropdown">
                       <input
                         type="text"
-                        placeholder="搜索策略..."
-                        value={searchStrategy}
-                        onChange={(e) => setSearchStrategy(e.target.value)}
-                        className="strategy-search-input"
+                        placeholder="搜索币种..."
+                        value={searchPair}
+                        onChange={(e) => setSearchPair(e.target.value)}
+                        className="pair-search-input"
                         onClick={(e) => e.stopPropagation()}
                         autoFocus
                       />
-                      
-                      <div className="strategy-list-container">
-                        {filteredStrategies.length > 0 ? (
-                          <div className="strategy-list">
-                            {filteredStrategies.map(([key, strategyData]) => (
+
+                      <div className="pair-list-header">
+                        <div className="pair-list-header-left">
+                          <div 
+                            className={`header-item header-item-symbol ${sortBy === 'name' ? 'active' : ''}`}
+                            onClick={() => handleSortChange('name')}
+                          >
+                            币种 {sortBy === 'name' && (sortDirection === 'desc' ? '↓' : '↑')}
+                          </div>
+                        </div>
+                        <div className="pair-list-header-right">
+                          <div 
+                            className={`header-item header-item-price ${sortBy === 'price' ? 'active' : ''}`}
+                            onClick={() => handleSortChange('price')}
+                          >
+                            价格 {sortBy === 'price' && (sortDirection === 'desc' ? '↓' : '↑')}
+                          </div>
+                          <div 
+                            className={`header-item header-item-change ${sortBy === 'change' ? 'active' : ''}`}
+                            onClick={() => handleSortChange('change')}
+                          >
+                            涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
+                          </div>
+                          <div 
+                            className={`header-item header-item-volume ${sortBy === 'volume' ? 'active' : ''}`}
+                            onClick={() => handleSortChange('volume')}
+                          >
+                            交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pair-list-container">
+                        {filteredPairs.length > 0 ? (
+                          <div className="pair-list">
+                            {filteredPairs.map(ticker => (
                               <div
-                                key={key}
-                                className={`strategy-item ${key === strategy ? 'selected' : ''}`}
-                                onClick={() => {
-                                  setStrategy(key);
-                                  setStrategyDropdownOpen(false);
-                                }}
+                                key={ticker.symbol}
+                                className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
+                                onClick={() => selectPair(ticker.symbol)}
                               >
-                                <span className="strategy-item-name">{strategyData.name}</span>
+                                <div className="pair-item-left">
+                                  <span className="pair-item-symbol">{ticker.symbol}</span>
+                                </div>
+                                <div className="pair-item-right">
+                                  <span className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</span>
+                                  <span className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
+                                    {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
+                                  </span>
+                                  <span className="pair-item-volume">
+                                    {formatVolume(ticker.volume)}
+                                  </span>
+                                </div>
                               </div>
-                  ))}
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="no-results">无匹配结果</div>
+                        )}
+                        {isLoadingTickers && <div className="load-more-indicator">加载更多...</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {dropdownOpen && marketType === 'stock' && (
+                    <div className="pairs-dropdown">
+                      <input
+                        type="text"
+                        placeholder="搜索股票代码或名称..."
+                        value={searchPair}
+                        onChange={(e) => setSearchPair(e.target.value)}
+                        className="pair-search-input"
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+
+                      <div className="stock-list-header">
+                        <span className="header-code">代码</span>
+                        <span className="header-name">名称</span>
+                        <span className="header-industry">行业</span>
+                        <span className="header-exchange">交易所</span>
+                      </div>
+
+                      <div className="pair-list-container" onScroll={handlePairsScroll}>
+                        {isLoadingStocks ? (
+                          <div className="loading-stocks">加载股票列表中...</div>
+                        ) : filteredStocks.length > 0 ? (
+                          <div className="pair-list stock-list">
+                            {filteredStocks.slice(0, 100).map(stock => (
+                              <div
+                                key={stock.code}
+                                className={`pair-item stock-item ${stock.code === selectedPair ? 'selected' : ''}`}
+                                onClick={() => selectPair(stock.code)}
+                              >
+                                <div className="stock-item-info">
+                                  <span className="stock-item-code">{stock.code.replace('.SZ', '').replace('.SH', '')}</span>
+                                  <span className="stock-item-name">{stock.name}</span>
+                                  <span className="stock-item-industry">{stock.industry || '-'}</span>
+                                  <span className="stock-item-exchange">{getExchangeName(stock.exchange)}</span>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         ) : (
                           <div className="no-results">无匹配结果</div>
@@ -1092,305 +1145,260 @@ const BacktestPanel: React.FC = () => {
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-
-            <div className="input-group">
-              <label>市场类型</label>
-              <div className="market-type-switcher">
-                <button
-                  className={`market-type-button ${marketType === 'crypto' ? 'active' : ''}`}
-                  onClick={() => {
-                    dispatch(setMarketType('crypto'));
-                    dispatch(setSelectedPair('BTC-USDT'));
-                  }}
-                >
-                  加密货币
-                </button>
-                <button
-                  className={`market-type-button ${marketType === 'stock' ? 'active' : ''}`}
-                  onClick={() => {
-                    dispatch(setMarketType('stock'));
-                    // 设置默认股票代码
-                    if (allStocks.length > 0) {
-                      dispatch(setSelectedPair(allStocks[0].code));
-                    }
-                  }}
-                >
-                  股票
-                </button>
               </div>
-            </div>
 
-            <div className="input-group">
-              <label>{marketType === 'crypto' ? '交易对' : '股票代码'}</label>
-              <div className="pair-selector-wrapper" ref={dropdownRef}>
-                <div className="selected-pair-display" onClick={handleDropdownToggle}>
-                  <span>
-                    {marketType === 'crypto' 
-                      ? selectedPair 
-                      : formatStockDisplay(selectedPair, allStocks.find(s => s.code === selectedPair)?.name)
-                    }
-                  </span>
-                  <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
+              <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
+
+              <div className="input-row">
+                <div className="input-group half-width">
+                  <label>开始日期</label>
+                  <input
+                    type="date"
+                    value={dateRange.startDate.split(' ')[0]}
+                    max={getYesterdayDateString()}
+                    onChange={handleStartDateChange}
+                  />
                 </div>
 
-                {dropdownOpen && marketType === 'crypto' && (
-                  <div className="pairs-dropdown">
-                    <input
-                      type="text"
-                      placeholder="搜索币种..."
-                      value={searchPair}
-                      onChange={(e) => setSearchPair(e.target.value)}
-                      className="pair-search-input"
-                      onClick={(e) => e.stopPropagation()}
-                      autoFocus
-                    />
-
-                    <div className="pair-list-header">
-                      <div className="pair-list-header-left">
-                        <div 
-                          className={`header-item header-item-symbol ${sortBy === 'name' ? 'active' : ''}`}
-                          onClick={() => handleSortChange('name')}
-                        >
-                          币种 {sortBy === 'name' && (sortDirection === 'desc' ? '↓' : '↑')}
-                        </div>
-                      </div>
-                      <div className="pair-list-header-right">
-                        <div 
-                          className={`header-item header-item-price ${sortBy === 'price' ? 'active' : ''}`}
-                          onClick={() => handleSortChange('price')}
-                        >
-                          价格 {sortBy === 'price' && (sortDirection === 'desc' ? '↓' : '↑')}
-                        </div>
-                        <div 
-                          className={`header-item header-item-change ${sortBy === 'change' ? 'active' : ''}`}
-                          onClick={() => handleSortChange('change')}
-                        >
-                          涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
-                        </div>
-                        <div 
-                          className={`header-item header-item-volume ${sortBy === 'volume' ? 'active' : ''}`}
-                          onClick={() => handleSortChange('volume')}
-                        >
-                          交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pair-list-container">
-                      {filteredPairs.length > 0 ? (
-                        <div className="pair-list">
-                          {filteredPairs.map(ticker => (
-                            <div
-                              key={ticker.symbol}
-                              className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
-                              onClick={() => selectPair(ticker.symbol)}
-                            >
-                              <div className="pair-item-left">
-                                <span className="pair-item-symbol">{ticker.symbol}</span>
-                              </div>
-                              <div className="pair-item-right">
-                                <span className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</span>
-                                <span className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
-                                  {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
-                                </span>
-                                <span className="pair-item-volume">
-                                  {formatVolume(ticker.volume)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="no-results">无匹配结果</div>
-                      )}
-                      {isLoadingTickers && <div className="load-more-indicator">加载更多...</div>}
-                    </div>
-                  </div>
-                )}
-
-                {dropdownOpen && marketType === 'stock' && (
-                  <div className="pairs-dropdown">
-                    <input
-                      type="text"
-                      placeholder="搜索股票代码或名称..."
-                      value={searchPair}
-                      onChange={(e) => setSearchPair(e.target.value)}
-                      className="pair-search-input"
-                      onClick={(e) => e.stopPropagation()}
-                      autoFocus
-                    />
-
-                    <div className="stock-list-header">
-                      <span className="header-code">代码</span>
-                      <span className="header-name">名称</span>
-                      <span className="header-industry">行业</span>
-                      <span className="header-exchange">交易所</span>
-                    </div>
-
-                    <div className="pair-list-container" onScroll={handlePairsScroll}>
-                      {isLoadingStocks ? (
-                        <div className="loading-stocks">加载股票列表中...</div>
-                      ) : filteredStocks.length > 0 ? (
-                        <div className="pair-list stock-list">
-                          {filteredStocks.slice(0, 100).map(stock => (
-                            <div
-                              key={stock.code}
-                              className={`pair-item stock-item ${stock.code === selectedPair ? 'selected' : ''}`}
-                              onClick={() => selectPair(stock.code)}
-                            >
-                              <div className="stock-item-info">
-                                <span className="stock-item-code">{stock.code.replace('.SZ', '').replace('.SH', '')}</span>
-                                <span className="stock-item-name">{stock.name}</span>
-                                <span className="stock-item-industry">{stock.industry || '-'}</span>
-                                <span className="stock-item-exchange">{getExchangeName(stock.exchange)}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="no-results">无匹配结果</div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <div className="input-group half-width">
+                  <label>结束日期</label>
+                  <input
+                    type="date"
+                    value={dateRange.endDate.split(' ')[0]}
+                    max={getYesterdayDateString()}
+                    onChange={handleEndDateChange}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="input-group">
-              <label>时间周期</label>
-              <div className="timeframe-controls">
-                <select value={timeframe} onChange={handleTimeframeChange}>
-                  {TIMEFRAMES.map((tf) => (
-                    <option key={tf.value} value={tf.value}>{tf.label}</option>
-                  ))}
-                </select>
-                <button 
-                  className="query-data-button"
-                  onClick={async () => {
-                    // 直接调用API获取数据
-                    try {
-                      console.log('开始查询数据...', { selectedPair, timeframe, dateRange });
-                      const result = await fetchHistoryWithIntegrityCheck(
-                        selectedPair,
-                        timeframe,
-                        dateRange.startDate,
-                        dateRange.endDate
-                      );
-                      
-                      if (result.data && result.data.length > 0) {
-                        console.log('数据查询成功，条数:', result.data.length);
-                        // 触发数据更新事件
-                        const event = new CustomEvent('chartDataLoaded', {
-                          detail: { data: result.data }
-                        });
-                        window.dispatchEvent(event);
-                      } else {
-                        console.warn('查询返回空数据');
-                        alert('未查询到数据，请检查交易对和时间范围');
+              <div className="input-group">
+                <label>时间周期</label>
+                <div className="timeframe-controls">
+                  <select value={timeframe} onChange={handleTimeframeChange}>
+                    {TIMEFRAMES.map((tf) => (
+                      <option key={tf.value} value={tf.value}>{tf.label}</option>
+                    ))}
+                  </select>
+                  <button 
+                    className="query-data-button"
+                    onClick={async () => {
+                      try {
+                        console.log('开始查询数据...', { selectedPair, timeframe, dateRange });
+                        const result = await fetchHistoryWithIntegrityCheck(
+                          selectedPair,
+                          timeframe,
+                          dateRange.startDate,
+                          dateRange.endDate
+                        );
+                        
+                        if (result.data && result.data.length > 0) {
+                          console.log('数据查询成功，条数:', result.data.length);
+                          const event = new CustomEvent('chartDataLoaded', {
+                            detail: { data: result.data }
+                          });
+                          window.dispatchEvent(event);
+                        } else {
+                          console.warn('查询返回空数据');
+                          alert('未查询到数据，请检查交易对和时间范围');
+                        }
+                      } catch (error) {
+                        console.error('查询数据失败:', error);
+                        alert('查询数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
                       }
-                    } catch (error) {
-                      console.error('查询数据失败:', error);
-                      alert('查询数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
-                    }
-                  }}
-                  type="button"
-                >
-                  查询数据
-                </button>
-                <select 
-                  className="main-indicator-selector"
-                  onChange={(e) => {
-                    // 触发主图指标变更事件
-                    const event = new CustomEvent('mainIndicatorChange', {
-                      detail: { indicator: e.target.value }
-                    });
-                    window.dispatchEvent(event);
-                  }}
-                  defaultValue="boll"
-                >
-                  <option value="none">无指标</option>
-                  <option value="boll">布林带(BOLL)</option>
-                  <option value="sar">抛物线(SAR)</option>
-                </select>
+                    }}
+                    type="button"
+                  >
+                    查询数据
+                  </button>
+                  <select 
+                    className="main-indicator-selector"
+                    onChange={(e) => {
+                      const event = new CustomEvent('mainIndicatorChange', {
+                        detail: { indicator: e.target.value }
+                      });
+                      window.dispatchEvent(event);
+                    }}
+                    defaultValue="boll"
+                  >
+                    <option value="none">无指标</option>
+                    <option value="boll">布林带(BOLL)</option>
+                    <option value="sar">抛物线(SAR)</option>
+                  </select>
+                </div>
               </div>
             </div>
-            
-            {/* 新增止损百分比设置 */}
-            <div className="input-group">
-              <label>止损百分比:</label>
-              <div className="input-with-button">
+
+            {/* ========== 回测配置区 ========== */}
+            <div className="form-section">
+              <h4 className="section-title">回测配置</h4>
+
+              <div className="input-group">
+                <label>交易策略</label>
+                {loading ? (
+                  <div className="loading-strategies">加载策略中...</div>
+                ) : error ? (
+                  <div className="error-message">策略加载失败，请刷新重试</div>
+                ) : (
+                  <div className="strategy-selector-wrapper" ref={strategyDropdownRef}>
+                    <div className="selected-strategy-display" onClick={() => setStrategyDropdownOpen(!strategyDropdownOpen)}>
+                      <span>{strategies[strategy]?.name || '选择策略'}</span>
+                      <span className="dropdown-arrow">{strategyDropdownOpen ? '▲' : '▼'}</span>
+                    </div>
+
+                    {strategyDropdownOpen && (
+                      <div className="strategy-dropdown">
+                        <input
+                          type="text"
+                          placeholder="搜索策略..."
+                          value={searchStrategy}
+                          onChange={(e) => setSearchStrategy(e.target.value)}
+                          className="strategy-search-input"
+                          onClick={(e) => e.stopPropagation()}
+                          autoFocus
+                        />
+                        
+                        <div className="strategy-list-container">
+                          {filteredStrategies.length > 0 ? (
+                            <div className="strategy-list">
+                              {filteredStrategies.map(([key, strategyData]) => (
+                                <div
+                                  key={key}
+                                  className={`strategy-item ${key === strategy ? 'selected' : ''}`}
+                                  onClick={() => {
+                                    setStrategy(key);
+                                    setStrategyDropdownOpen(false);
+                                  }}
+                                >
+                                  <span className="strategy-item-name">{strategyData.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="no-results">无匹配结果</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="input-row">
+                <div className="input-group half-width">
+                  <label>初始资金 (USDT)</label>
+                  <input
+                    type="number"
+                    value={initialCapital}
+                    onChange={(e) => setInitialCapital(e.target.value)}
+                    min="100"
+                    step="100"
+                  />
+                </div>
+
+                <div className="input-group half-width">
+                  <label>手续费率</label>
+                  <input
+                    type="number"
+                    value={feeRatio}
+                    onChange={(e) => setFeeRatio(e.target.value)}
+                    min="0"
+                    max="0.01"
+                    step="0.0001"
+                    placeholder="0.001"
+                  />
+                </div>
+              </div>
+
+              <div className="input-row">
+                <div className="input-group half-width">
+                  <label>止损百分比</label>
+                  <div className="input-with-button">
+                    <input
+                      type="number"
+                      value={stopLossPercent}
+                      onChange={(e) => setStopLossPercent(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      disabled={loadingParameters}
+                    />
+                    <button 
+                      onClick={handleUpdateStopLoss} 
+                      disabled={updatingStopLoss || loadingParameters}
+                      className="update-button"
+                    >
+                      {updatingStopLoss ? '更新中...' : '更新'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="input-group half-width">
+                  <label>移动止盈百分比</label>
+                  <div className="input-with-button">
+                    <input
+                      type="number"
+                      value={trailingProfitPercent}
+                      onChange={(e) => setTrailingProfitPercent(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      disabled={loadingParameters}
+                    />
+                    <button 
+                      onClick={handleUpdateTrailingProfit}
+                      disabled={updatingTrailingProfit || loadingParameters}
+                      className="update-button"
+                    >
+                      {updatingTrailingProfit ? '更新中...' : '更新'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                className="run-backtest-button"
+                onClick={runBacktest}
+                disabled={isBacktesting || !strategy}
+              >
+                {isBacktesting ? '回测中...' : '运行回测'}
+              </button>
+
+              <button
+                className="run-batch-backtest-button"
+                onClick={runBatchBacktest}
+                disabled={runningBatchBacktest || isBacktesting}
+              >
+                {runningBatchBacktest ? '批量回测中...' : '运行批量回测'}
+              </button>
+            </div>
+
+            {/* ========== 实盘配置区 ========== */}
+            <div className="form-section">
+              <h4 className="section-title">实盘配置</h4>
+
+              <div className="input-group">
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>交易金额 (USDT)</span>
+                  <span style={{ fontSize: '12px', color: '#4caf50', marginLeft: '8px' }}>
+                    {loadingBalance ? '加载中...' : accountBalance !== null ? `可用: ${accountBalance.toFixed(2)} USDT` : ''}
+                  </span>
+                </label>
                 <input
                   type="number"
-                  value={stopLossPercent}
-                  onChange={(e) => setStopLossPercent(e.target.value)}
-                  min="0"
-                  step="0.01"
-                  disabled={loadingParameters}
+                  value={tradeAmount}
+                  onChange={(e) => setTradeAmount(e.target.value)}
+                  min="1"
+                  step="1"
+                  placeholder="用于实时策略的单次交易金额"
                 />
-                <button 
-                  onClick={handleUpdateStopLoss} 
-                  disabled={updatingStopLoss || loadingParameters}
-                  className="update-button"
-                >
-                  {updatingStopLoss ? '更新中...' : '更新'}
-                </button>
               </div>
+
+              <button
+                className="create-realtime-strategy-button"
+                onClick={createRealTimeStrategyHandler}
+                disabled={creatingRealTimeStrategy || !strategy}
+              >
+                {creatingRealTimeStrategy ? '创建中...' : '创建实时策略'}
+              </button>
             </div>
-
-            {/* 新增移动止盈百分比设置 */}
-            <div className="input-group">
-              <label>移动止盈百分比:</label>
-              <div className="input-with-button">
-                <input
-                  type="number"
-                  value={trailingProfitPercent}
-                  onChange={(e) => setTrailingProfitPercent(e.target.value)}
-                  min="0"
-                  step="0.01"
-                  disabled={loadingParameters}
-                />
-                <button 
-                  onClick={handleUpdateTrailingProfit}
-                  disabled={updatingTrailingProfit || loadingParameters}
-                  className="update-button"
-                >
-                  {updatingTrailingProfit ? '更新中...' : '更新'}
-                </button>
-              </div>
-            </div>
-
-            <button
-              className="run-backtest-button"
-              onClick={runBacktest}
-              disabled={isBacktesting || !strategy}
-            >
-              {isBacktesting ? '回测中...' : '运行回测'}
-            </button>
-
-            <button
-              className="run-batch-backtest-button"
-              onClick={runBatchBacktest}
-              disabled={runningBatchBacktest || isBacktesting}
-            >
-              {runningBatchBacktest ? '批量回测中...' : '运行批量回测'}
-            </button>
-
-            <button
-              className="create-realtime-strategy-button"
-              onClick={createRealTimeStrategyHandler}
-              disabled={creatingRealTimeStrategy || !strategy}
-            >
-              {creatingRealTimeStrategy ? '创建中...' : '创建实时策略'}
-            </button>
-
-            {/* 移除批量回测状态消息 */}
-            {/* {batchStatusMessage && (
-              <div className={`batch-status-message ${runningBatchBacktest ? 'loading' : ''}`}>
-                {batchStatusMessage}
-              </div>
-            )} */}
           </div>
         ) : (
           <div className="backtest-results">
