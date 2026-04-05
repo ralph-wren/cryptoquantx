@@ -33,7 +33,7 @@
 
 .refresh-button {
   padding: 8px 16px;
-  background-color: #4caf50;
+  background-color: #2962ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -43,7 +43,7 @@
 }
 
 .refresh-button:hover {
-  background-color: #45a049;
+  background-color: #1e4bd8;
 }
 
 .refresh-button:disabled {
@@ -296,7 +296,7 @@
 
 .strategy-detail-btn {
   padding: 6px 14px;
-  background-color: #2196f3;
+  background-color: #2962ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -308,12 +308,12 @@
 }
 
 .strategy-detail-btn:hover {
-  background-color: #1976d2;
+  background-color: #1e4bd8;
 }
 
 .strategy-start-btn {
   padding: 6px 14px;
-  background-color: #4caf50;
+  background-color: #2962ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -324,11 +324,11 @@
 }
 
 .strategy-start-btn:hover {
-  background-color: #45a049;
+  background-color: #1e4bd8;
 }
 
 .strategy-start-btn:disabled {
-  background-color: #8bc34a;
+  background-color: #5a7cff;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -380,7 +380,7 @@
 
 .strategy-copy-btn {
   padding: 6px 14px;
-  background-color: #3f51b5;
+  background-color: #2962ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -392,11 +392,11 @@
 }
 
 .strategy-copy-btn:hover {
-  background-color: #303f9f;
+  background-color: #1e4bd8;
 }
 
 .strategy-copy-btn:disabled {
-  background-color: #7986cb;
+  background-color: #5a7cff;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -404,7 +404,7 @@
 /* 开仓按钮样式 */
 .strategy-buy-btn {
   padding: 6px 14px;
-  background-color: #4caf50;
+  background-color: #2962ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -416,11 +416,11 @@
 }
 
 .strategy-buy-btn:hover {
-  background-color: #388e3c;
+  background-color: #1e4bd8;
 }
 
 .strategy-buy-btn:disabled {
-  background-color: #81c784;
+  background-color: #5a7cff;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -428,7 +428,7 @@
 /* 平仓按钮样式 */
 .strategy-sell-btn {
   padding: 6px 14px;
-  background-color: #ff9800;
+  background-color: #2962ff;
   color: white;
   border: none;
   border-radius: 4px;
@@ -440,11 +440,11 @@
 }
 
 .strategy-sell-btn:hover {
-  background-color: #f57c00;
+  background-color: #1e4bd8;
 }
 
 .strategy-sell-btn:disabled {
-  background-color: #ffb74d;
+  background-color: #5a7cff;
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -586,7 +586,7 @@
 }
 
 .refresh-button {
-  background-color: #1976d2; /* 蓝色背景 */
+  background-color: #2962ff; /* 蓝色背景 */
   color: #ffffff; /* 白色文字 */
   border: none;
   border-radius: 4px;
@@ -599,11 +599,11 @@
 }
 
 .refresh-button:hover {
-  background-color: #1565c0; /* 深蓝色 */
+  background-color: #1e4bd8; /* 深蓝色 */
 }
 
 .refresh-button:disabled {
-  background-color: #64b5f6; /* 浅蓝色 */
+  background-color: #5a7cff; /* 浅蓝色 */
   color: #e1f5fe;
   cursor: not-allowed;
   opacity: 0.7;
