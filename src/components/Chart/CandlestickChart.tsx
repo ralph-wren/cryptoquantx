@@ -30,6 +30,7 @@ import QuickTimeSelector from './QuickTimeSelector';
 const CHART_BAR_SPACING_KEY = 'cryptoquantx_chart_bar_spacing';
 // K线数据本地存储键名
 const CANDLESTICK_DATA_KEY = 'cryptoquantx_candlestick_data';
+const CANDLESTICK_META_KEY = 'cryptoquantx_candlestick_meta'; // 保存数据的元信息（股票代码、周期等）
 const CHART_SETTINGS_KEY = 'cryptoquantx_chart_settings';
 
 // 默认K线宽度
@@ -55,12 +56,21 @@ const saveBarSpacing = (spacing: number): void => {
   }
 };
 
-// 保存K线数据到localStorage
-const saveCandlestickData = (data: CandlestickData[]): void => {
+// 保存K线数据到localStorage（同时保存元信息）
+const saveCandlestickData = (data: CandlestickData[], symbol: string, timeframe: string): void => {
   try {
     localStorage.setItem(CANDLESTICK_DATA_KEY, JSON.stringify(data));
+    // 保存元信息
+    const meta = {
+      symbol,
+      timeframe,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(CANDLESTICK_META_KEY, JSON.stringify(meta));
     // console.log('已保存K线数据到localStorage:', {
     //   dataLength: data.length,
+    //   symbol,
+    //   timeframe,
     //   firstItem: data.length > 0 ? data[0] : null
     // });
   } catch (error) {
@@ -68,14 +78,38 @@ const saveCandlestickData = (data: CandlestickData[]): void => {
   }
 };
 
-// 从localStorage获取K线数据
-const getSavedCandlestickData = (): CandlestickData[] => {
+// 从localStorage获取K线数据（检查元信息是否匹配）
+const getSavedCandlestickData = (symbol: string, timeframe: string): CandlestickData[] => {
   try {
     const savedData = localStorage.getItem(CANDLESTICK_DATA_KEY);
-    const data = savedData ? JSON.parse(savedData) : [];
+    if (!savedData) {
+      console.log('没有找到K线数据');
+      return [];
+    }
+    
+    const savedMeta = localStorage.getItem(CANDLESTICK_META_KEY);
+    if (!savedMeta) {
+      console.log('没有找到K线数据元信息，但有数据，直接返回数据');
+      return JSON.parse(savedData);
+    }
+    
+    const meta = JSON.parse(savedMeta);
+    // 检查元信息是否匹配
+    if (meta.symbol !== symbol || meta.timeframe !== timeframe) {
+      console.log('K线数据元信息不匹配，但仍返回缓存数据（用户可能切换了交易对）:', {
+        cached: { symbol: meta.symbol, timeframe: meta.timeframe },
+        current: { symbol, timeframe }
+      });
+      // 不清除缓存，让用户看到之前的数据，直到查询新数据
+    }
+    
+    const data = JSON.parse(savedData);
     console.log('从localStorage读取K线数据:', {
-      hasData: !!savedData,
       dataLength: data.length,
+      metaSymbol: meta.symbol,
+      metaTimeframe: meta.timeframe,
+      currentSymbol: symbol,
+      currentTimeframe: timeframe,
       firstItem: data.length > 0 ? data[0] : null
     });
     return data;
@@ -317,6 +351,8 @@ const CandlestickChart: React.FC = () => {
       console.log('收到图表数据加载事件，数据条数:', event.detail.data.length);
       // 直接更新Redux中的数据
       dispatch(updateCandlestickData(event.detail.data));
+      // 保存数据和元信息到localStorage
+      saveCandlestickData(event.detail.data, selectedPair, timeframe);
       setIsLoading(false); // 结束加载
     };
 
@@ -329,7 +365,7 @@ const CandlestickChart: React.FC = () => {
       window.removeEventListener('chartDataLoading', handleChartDataLoading as EventListener);
       window.removeEventListener('chartDataLoaded', handleChartDataLoaded as EventListener);
     };
-  }, [dispatch]);
+  }, [dispatch, selectedPair, timeframe]);
 
   // 监听来自BacktestPanel的主图指标变更事件
   useEffect(() => {
@@ -2926,8 +2962,8 @@ const CandlestickChart: React.FC = () => {
           // 更新Redux中的数据
           dispatch(updateCandlestickData(candlestickData));
 
-          // 保存K线数据到localStorage
-          saveCandlestickData(candlestickData);
+          // 保存K线数据到localStorage（包含元信息）
+          saveCandlestickData(candlestickData, selectedPair, timeframe);
 
           // 保存图表设置到localStorage
           saveChartSettings({

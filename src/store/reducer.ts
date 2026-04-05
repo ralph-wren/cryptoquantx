@@ -18,9 +18,25 @@ const getSavedSettings = () => {
 const getSavedData = () => {
   try {
     const savedData = localStorage.getItem('cryptoquantx_candlestick_data');
-    const data = savedData ? JSON.parse(savedData) : [];
+    if (!savedData) {
+      console.log('Redux初始化 - 没有保存的K线数据');
+      return [];
+    }
+    
+    // 获取元信息（如果有的话）
+    const savedMeta = localStorage.getItem('cryptoquantx_candlestick_meta');
+    const savedSettings = getSavedSettings();
+    
+    if (savedMeta && savedSettings) {
+      const meta = JSON.parse(savedMeta);
+      console.log('Redux初始化 - K线数据元信息:', {
+        cached: { symbol: meta.symbol, timeframe: meta.timeframe },
+        current: { symbol: savedSettings.selectedPair, timeframe: savedSettings.timeframe }
+      });
+    }
+    
+    const data = JSON.parse(savedData);
     console.log('Redux初始化 - 从localStorage恢复K线数据:', {
-      hasData: !!savedData,
       dataLength: data.length,
       firstItem: data.length > 0 ? data[0] : null
     });
