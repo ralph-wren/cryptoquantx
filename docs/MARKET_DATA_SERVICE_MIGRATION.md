@@ -130,6 +130,12 @@ const status = marketDataService.getCacheStatus();
 
 ## 优化历史
 
+### 2026-04-05 - 第三次优化：移除重复调用
+- **问题**：GlobalNavbar 中 `startAutoRefresh` 和 `getMarketData` 重复调用
+- **原因**：`startAutoRefresh` 内部已经会立即获取一次数据，无需再次调用
+- **解决方案**：移除 GlobalNavbar 中的 `getMarketData()` 调用
+- **预期效果**：减少初始加载时的重复请求
+
 ### 2026-04-05 - 第二次优化：强化请求去重
 - **问题**：页面初始加载时仍有10次并发请求
 - **原因**：多个组件在同一事件循环中调用 `getMarketData()`，`pendingRequest` 机制未完全生效
@@ -142,4 +148,4 @@ const status = marketDataService.getCacheStatus();
 ---
 
 迁移完成时间：2026-04-05
-最后优化时间：2026-04-05
+最后优化时间：2026-04-05 23:15
