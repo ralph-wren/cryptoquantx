@@ -207,6 +207,9 @@
   height: 100%;
   margin-bottom: 0;
   padding-bottom: 0;
+  display: flex; /* 添加flex布局 */
+  flex-direction: column; /* 垂直排列 */
+  gap: 0; /* 移除子元素间距 */
 }
 
 .main-chart {
@@ -222,9 +225,10 @@
   position: relative;
   height: 200px; /* 增加高度 */
   min-height: 200px; /* 增加最小高度 */
-  margin-top: 0; /* 紧贴主图 */
+  margin-top: 2px; /* 只保留2px的分隔线空间 */
   margin-bottom: 0; /* 去掉底部间距 */
   padding-top: 0; /* 确保没有内边距 */
+  padding-bottom: 0; /* 确保没有内边距 */
   border-top: 1px solid #2e3241; /* 保留分隔线 */
   flex: 1;
 }

@@ -530,16 +530,17 @@ const CandlestickChart: React.FC = () => {
         if (dataIndex !== -1 && dataIndex < candlestickData.length) {
           const currentCandle = candlestickData[dataIndex];
 
-          // 调试日志，查看K线数据中的时间字段
-          // console.log('当前K线数据:', {
-          //   index: dataIndex,
-          //   time: currentCandle.time,
-          //   closeTime: currentCandle.closeTime,
-          //   openTime: currentCandle.openTime,
-          //   hasOpenTime: !!currentCandle.openTime,
-          //   hasCloseTime: !!currentCandle.closeTime,
-          //   candleData: currentCandle
-          // });
+          // 调试日志，查看K线数据中的时间字段和OHLC数据
+          console.log('悬浮窗K线数据:', {
+            index: dataIndex,
+            openTime: currentCandle.openTime,
+            closeTime: currentCandle.closeTime,
+            open: currentCandle.open,
+            high: currentCandle.high,
+            low: currentCandle.low,
+            close: currentCandle.close,
+            volume: currentCandle.volume
+          });
 
           // 获取收盘时间 - 优先使用closeTime字段
           if (currentCandle.closeTime) {
@@ -598,7 +599,95 @@ const CandlestickChart: React.FC = () => {
           changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
         }
 
-        // 设置悬浮数据，并包含鼠标位置信息
+        // 收集指标数据
+        const indicators: any = {};
+        
+        // 如果找到了有效的数据索引，收集指标值
+        if (dataIndex !== -1 && dataIndex < candlestickData.length) {
+          // 收集BOLL指标值（主图）
+          if (mainIndicator === 'boll') {
+            const closePrices = extractClosePrices(candlestickData);
+            const { upper, middle, lower } = calculateBollingerBands(closePrices);
+            const upperValue = safeGetDataPoint(upper, dataIndex);
+            const middleValue = safeGetDataPoint(middle, dataIndex);
+            const lowerValue = safeGetDataPoint(lower, dataIndex);
+            if (typeof upperValue === 'number' && typeof middleValue === 'number' && typeof lowerValue === 'number') {
+              indicators.boll = {
+                upper: upperValue.toFixed(2),
+                middle: middleValue.toFixed(2),
+                lower: lowerValue.toFixed(2)
+              };
+            }
+          }
+          
+          // 收集SAR指标值（主图）
+          if (mainIndicator === 'sar') {
+            const highPrices = extractHighPrices(candlestickData);
+            const lowPrices = extractLowPrices(candlestickData);
+            const closePrices = extractClosePrices(candlestickData);
+            const sarData = calculateSAR(highPrices, lowPrices, closePrices);
+            const sarValue = safeGetDataPoint(sarData, dataIndex);
+            if (typeof sarValue === 'number') {
+              indicators.sar = sarValue.toFixed(2);
+            }
+          }
+          
+          // 收集MACD指标值
+          if (isSubIndicatorSelected('macd')) {
+            const closePrices = extractClosePrices(candlestickData);
+            const { macd, signal, histogram } = calculateMACD(closePrices);
+            const macdValue = safeGetDataPoint(macd, dataIndex);
+            const signalValue = safeGetDataPoint(signal, dataIndex);
+            const histogramValue = safeGetDataPoint(histogram, dataIndex);
+            if (typeof macdValue === 'number' && typeof signalValue === 'number' && typeof histogramValue === 'number') {
+              indicators.macd = {
+                macd: macdValue.toFixed(4),
+                signal: signalValue.toFixed(4),
+                histogram: histogramValue.toFixed(4)
+              };
+            }
+          }
+          
+          // 收集RSI指标值
+          if (isSubIndicatorSelected('rsi')) {
+            const closePrices = extractClosePrices(candlestickData);
+            const rsiData = calculateRSI(closePrices);
+            const rsiValue = safeGetDataPoint(rsiData, dataIndex);
+            if (typeof rsiValue === 'number') {
+              indicators.rsi = rsiValue.toFixed(2);
+            }
+          }
+          
+          // 收集StockRSI指标值
+          if (isSubIndicatorSelected('stockrsi')) {
+            const closePrices = extractClosePrices(candlestickData);
+            const stockRsiData = calculateStockRSI(closePrices);
+            const stockRsiValue = safeGetDataPoint(stockRsiData, dataIndex);
+            if (typeof stockRsiValue === 'number') {
+              indicators.stockrsi = stockRsiValue.toFixed(2);
+            }
+          }
+          
+          // 收集KDJ指标值
+          if (isSubIndicatorSelected('kdj')) {
+            const closePrices = extractClosePrices(candlestickData);
+            const highPrices = extractHighPrices(candlestickData);
+            const lowPrices = extractLowPrices(candlestickData);
+            const { k, d, j } = calculateKDJ(highPrices, lowPrices, closePrices);
+            const kValue = safeGetDataPoint(k, dataIndex);
+            const dValue = safeGetDataPoint(d, dataIndex);
+            const jValue = safeGetDataPoint(j, dataIndex);
+            if (typeof kValue === 'number' && typeof dValue === 'number' && typeof jValue === 'number') {
+              indicators.kdj = {
+                k: kValue.toFixed(2),
+                d: dValue.toFixed(2),
+                j: jValue.toFixed(2)
+              };
+            }
+          }
+        }
+        
+        // 设置悬浮数据，并包含鼠标位置信息和指标数据
         setHoveredData({
           time: closeTime, // 使用收盘时间作为主要时间
           openTime: openTime, // 添加开盘时间
@@ -611,7 +700,9 @@ const CandlestickChart: React.FC = () => {
           changePercent,
           // 添加鼠标位置信息
           mouseX: param.point.x,
-          mouseY: param.point.y
+          mouseY: param.point.y,
+          // 添加指标数据
+          indicators: Object.keys(indicators).length > 0 ? indicators : undefined
         });
 
         // console.log('最终找到的数据索引:', dataIndex);
@@ -3753,6 +3844,91 @@ const CandlestickChart: React.FC = () => {
                 {hoveredData.change} ({hoveredData.changePercent}%)
               </span>
             </div>
+            
+            {/* 指标数据分隔线 */}
+            {hoveredData.indicators && (
+              <div style={{ borderTop: '1px solid #555', margin: '6px 0' }}></div>
+            )}
+            
+            {/* BOLL指标 */}
+            {hoveredData.indicators?.boll && (
+              <>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">BOLL上轨:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.boll.upper}</span>
+                </div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">BOLL中轨:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.boll.middle}</span>
+                </div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">BOLL下轨:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.boll.lower}</span>
+                </div>
+              </>
+            )}
+            
+            {/* SAR指标 */}
+            {hoveredData.indicators?.sar && (
+              <div className="tooltip-row">
+                <span className="tooltip-label">SAR:</span>
+                <span className="tooltip-value">{hoveredData.indicators.sar}</span>
+              </div>
+            )}
+            
+            {/* MACD指标 */}
+            {hoveredData.indicators?.macd && (
+              <>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">MACD:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.macd.macd}</span>
+                </div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">信号线:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.macd.signal}</span>
+                </div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">柱状图:</span>
+                  <span className={`tooltip-value ${parseFloat(hoveredData.indicators.macd.histogram) >= 0 ? 'positive' : 'negative'}`}>
+                    {hoveredData.indicators.macd.histogram}
+                  </span>
+                </div>
+              </>
+            )}
+            
+            {/* RSI指标 */}
+            {hoveredData.indicators?.rsi && (
+              <div className="tooltip-row">
+                <span className="tooltip-label">RSI:</span>
+                <span className="tooltip-value">{hoveredData.indicators.rsi}</span>
+              </div>
+            )}
+            
+            {/* StockRSI指标 */}
+            {hoveredData.indicators?.stockrsi && (
+              <div className="tooltip-row">
+                <span className="tooltip-label">StockRSI:</span>
+                <span className="tooltip-value">{hoveredData.indicators.stockrsi}</span>
+              </div>
+            )}
+            
+            {/* KDJ指标 */}
+            {hoveredData.indicators?.kdj && (
+              <>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">K值:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.kdj.k}</span>
+                </div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">D值:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.kdj.d}</span>
+                </div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">J值:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.kdj.j}</span>
+                </div>
+              </>
+            )}
           </div>
         )}
 

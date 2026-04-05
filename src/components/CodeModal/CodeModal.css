@@ -105,22 +105,24 @@
 }
 
 .error-container {
-  background-color: #1a1a2e;
-  margin-bottom: 0;
-  max-height: calc(1.5em * 5 + 20px); /* 最大5行高度 + padding */
+  background-color: #2d1f1f;
+  border: 1px solid #d32f2f;
+  border-radius: 4px;
+  margin: 10px 20px;
+  max-height: 200px;
   overflow-y: auto;
   overflow-x: hidden;
-  width: 100%;
+  width: calc(100% - 40px);
 }
 
 .error-block {
   margin: 0;
-  padding: 1px 6px;
+  padding: 10px 15px;
   background-color: transparent;
-  color: #e6e6e6;
+  color: #ff6b6b;
   font-family: 'Courier New', monospace;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;

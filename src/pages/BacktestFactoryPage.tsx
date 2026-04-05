@@ -598,51 +598,56 @@ const BacktestFactoryPage: React.FC = () => {
         setShowGenerateModal(false);
         
         // 显示详细的返回信息
-        let message = '策略生成成功!';
+        let message = '';
+        let resultType: 'success' | 'error' | 'info' = 'success';
+        
+        // 优先显示服务器返回的message（包含编译失败警告）
+        if (result.message && result.message !== 'SUCCESS') {
+          message = result.message;
+          // 如果消息中包含"编译失败"，使用警告类型
+          if (message.includes('编译失败')) {
+            resultType = 'error';
+          }
+        } else {
+          message = '策略生成成功!';
+        }
         
         if (result.data) {
           try {
             let strategyData;
             
             // 解析数据
-          if (typeof result.data === 'string') {
+            if (typeof result.data === 'string') {
               strategyData = JSON.parse(result.data);
             } else if (Array.isArray(result.data)) {
               strategyData = result.data[0]; // 取第一个策略
-          } else if (typeof result.data === 'object') {
+            } else if (typeof result.data === 'object') {
               strategyData = result.data;
             }
             
             // 检查是否有加载错误
             if (strategyData && strategyData.loadError) {
-              message = `策略生成失败!\n\n错误信息: ${strategyData.loadError}`;
-              showResult('策略生成失败', message, 'error');
-              return;
-            }
-            
-            // 格式化显示策略信息，去掉id和sourceCode字段
-            if (strategyData) {
-              const { id, sourceCode, source_code, ...displayData } = strategyData;
-              message += `\n\n返回数据:\n${JSON.stringify(displayData, null, 2)}`;
+              message = `策略已保存但编译失败!\n\n错误信息: ${strategyData.loadError}`;
+              resultType = 'error';
+            } else if (strategyData) {
+              // 格式化显示策略信息，去掉id和sourceCode字段
+              const { id, sourceCode, source_code, loadError, load_error, ...displayData } = strategyData;
+              message += `\n\n策略信息:\n${JSON.stringify(displayData, null, 2)}`;
             }
           } catch (error) {
             console.error('解析策略数据出错:', error);
             if (typeof result.data === 'string') {
               message += `\n\n生成的策略:\n${result.data}`;
             } else {
-            message += `\n\n返回数据:\n${JSON.stringify(result.data, null, 2)}`;
+              message += `\n\n返回数据:\n${JSON.stringify(result.data, null, 2)}`;
+            }
           }
-        }
-        }
-        
-        if (result.message && result.message !== '策略生成成功') {
-          message += `\n\n服务器消息: ${result.message}`;
         }
 
         // 使用ResultModal显示详细信息
-        showResult('策略生成成功', message, 'success');
+        showResult(resultType === 'error' ? '策略生成警告' : '策略生成成功', message, resultType);
 
-        setStatusMessage('策略生成成功!');
+        setStatusMessage(resultType === 'error' ? '策略已保存但编译失败' : '策略生成成功!');
         setStrategyDescription('');
         // 重新加载策略列表
         loadStrategies();
@@ -687,15 +692,31 @@ const BacktestFactoryPage: React.FC = () => {
         setShowUpdateModal(false);
         setUpdateStrategyDescription('');
         setCurrentStrategyId(null);
+        
+        // 检查是否有编译失败的警告
+        let resultType: 'success' | 'error' | 'info' = 'success';
+        let title = '策略修改成功';
+        let message = '';
+        
+        // 优先显示服务器返回的message（包含编译失败警告）
+        if (result.message && result.message !== 'SUCCESS') {
+          message = result.message + '\n\n';
+          // 如果消息中包含"编译失败"，使用警告类型
+          if (message.includes('编译失败')) {
+            resultType = 'error';
+            title = '策略修改警告';
+          }
+        }
+        
         // 显示策略详细信息
         const strategyData = result.data;
-        const detailMessage = `
-策略名称: ${strategyData.strategyName}
+        message += `策略名称: ${strategyData.strategyName}
 分类: ${strategyData.category}
 描述: ${strategyData.description}
 评论: ${strategyData.comments}
 更新时间: ${strategyData.updateTime}`;
-        showResult('策略修改成功', detailMessage, 'success');
+        
+        showResult(title, message, resultType);
         // 刷新策略列表
         await loadStrategies();
       } else {
@@ -914,14 +935,14 @@ const BacktestFactoryPage: React.FC = () => {
       setShowStrategyDetailModal(true);
     };
 
+    // 判断是否为预置策略（source_code为空或null表示预置策略）
+    const isPresetStrategy = !strategy.source_code || strategy.source_code.trim() === '';
+
     return (
       <div key={strategyCode} className="strategy-row">
-        <div 
-          className="strategy-cell name clickable" 
-          onClick={handleStrategyNameClick}
-          title="点击查看策略详情"
-        >
+        <div className="strategy-cell name">
           {strategy.name}
+          {isPresetStrategy && <span className="preset-badge" title="预置策略">📌</span>}
         </div>
         <div className="strategy-cell comments">{strategy.comments || '暂无评价'}</div>
         <div className="strategy-cell category">{strategy.category}</div>
@@ -951,8 +972,10 @@ const BacktestFactoryPage: React.FC = () => {
             执行
           </button>
           <button
-            className="update-btn"
-            onClick={() => openUpdateModal(strategy.id || 0)}
+            className={`update-btn ${isPresetStrategy ? 'disabled' : ''}`}
+            onClick={() => !isPresetStrategy && openUpdateModal(strategy.id || 0)}
+            disabled={isPresetStrategy}
+            title={isPresetStrategy ? '预置策略不允许更新' : '更新策略'}
           >
             更新
           </button>

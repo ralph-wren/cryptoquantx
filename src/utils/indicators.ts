@@ -263,7 +263,7 @@ export const calculateMACD = (
     // 计算柱状图
     const histogram = safeMACD.map((value, i) => {
       if (i >= safeSignal.length || isNaN(value) || isNaN(safeSignal[i])) return NaN;
-      return (value - safeSignal[i]) * 2;
+      return value - safeSignal[i];
     });
 
     return {
@@ -575,7 +575,9 @@ export const calculateBollingerBands = (
         continue;
       }
 
-      const stdDev = Math.sqrt(sum / validCount);
+      // 使用样本标准差（除以 period，而不是 validCount）
+      // 这与大多数金融平台的计算方式一致
+      const stdDev = Math.sqrt(sum / period);
       upper.push(middle[i] + multiplier * stdDev);
       lower.push(middle[i] - multiplier * stdDev);
     }

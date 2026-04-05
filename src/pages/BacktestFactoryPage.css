@@ -248,11 +248,21 @@
 .strategy-cell.name {
   width: 150px;
   flex-shrink: 0;
-  cursor: pointer;
   font-weight: 500;
+  position: relative;
+  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 预置策略标识 */
+.preset-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 14px;
+  opacity: 0.8;
+  cursor: help;
 }
 
 .strategy-cell.name.clickable {
@@ -397,8 +407,20 @@
   color: white;
 }
 
-.update-btn:hover {
+.update-btn:hover:not(:disabled) {
   background-color: #1976d2;
+}
+
+.update-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #666;
+}
+
+.update-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #666;
 }
 
 .delete-btn {
