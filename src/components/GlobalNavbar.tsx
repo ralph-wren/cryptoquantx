@@ -16,6 +16,9 @@ const GlobalNavbar: React.FC = () => {
 
   // 组件挂载时订阅市场数据
   useEffect(() => {
+    // 确保停止任何正在运行的自动刷新
+    marketDataService.stopAutoRefresh();
+    
     // 订阅市场数据更新
     const unsubscribe = marketDataService.subscribe((data) => {
       // 按指定顺序筛选主流币种
@@ -37,6 +40,8 @@ const GlobalNavbar: React.FC = () => {
     // 清理函数
     return () => {
       unsubscribe();
+      // 组件卸载时停止自动刷新
+      marketDataService.stopAutoRefresh();
     };
   }, []); // 空依赖数组，只在挂载时执行一次
 
