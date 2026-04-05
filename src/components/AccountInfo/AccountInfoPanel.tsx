@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchAccountBalance, fetchAllTickers } from '../../services/api';
+import { fetchAccountBalance } from '../../services/api';
+import { marketDataService, TickerData } from '../../services/marketDataService';
 import './AccountInfoPanel.css';
 
 interface Ticker {
@@ -59,20 +60,16 @@ const AccountInfoPanel: React.FC = () => {
     setIsLoadingTickers(true);
     setTickersError(null);
     try {
-      const response = await fetchAllTickers('all', 2000);
-      if (response.success && response.data) {
-        // 格式化数据，保留需要的字段包括交易量
-        const formattedTickers = response.data.map((ticker: any) => ({
-          symbol: ticker.symbol,
-          lastPrice: parseFloat(ticker.lastPrice),
-          priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
-          volume: parseFloat(ticker.quoteVolume || ticker.volume || '0') // 优先使用quoteVolume
-        }));
-        setAllTickers(formattedTickers);
-        console.log('获取所有币种行情成功:', formattedTickers.length);
-      } else {
-        setTickersError(response.message || '获取所有币种行情失败');
-      }
+      const data = await marketDataService.getMarketData();
+      // 格式化数据，保留需要的字段包括交易量
+      const formattedTickers = data.map((ticker: any) => ({
+        symbol: ticker.symbol,
+        lastPrice: parseFloat(ticker.lastPrice),
+        priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
+        volume: parseFloat(ticker.quoteVolume || ticker.volume || '0') // 优先使用quoteVolume
+      }));
+      setAllTickers(formattedTickers);
+      console.log('获取所有币种行情成功:', formattedTickers.length);
     } catch (error) {
       console.error('获取所有币种行情时发生错误:', error);
       setTickersError(error instanceof Error ? error.message : '获取所有币种行情时发生错误');
@@ -86,13 +83,26 @@ const AccountInfoPanel: React.FC = () => {
     loadAccountBalance();
     loadAllTickers();
     
-    // 每5分钟刷新一次数据
+    // 订阅市场数据更新
+    const unsubscribe = marketDataService.subscribe((data) => {
+      const formattedTickers = data.map((ticker: any) => ({
+        symbol: ticker.symbol,
+        lastPrice: parseFloat(ticker.lastPrice),
+        priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
+        volume: parseFloat(ticker.quoteVolume || ticker.volume || '0')
+      }));
+      setAllTickers(formattedTickers);
+    });
+    
+    // 每5分钟刷新一次账户余额
     const intervalId = setInterval(() => {
       loadAccountBalance();
-      loadAllTickers();
     }, 5 * 60 * 1000);
     
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      unsubscribe();
+    };
   }, []);
 
   // 当搜索词、排序条件或币种数据变化时，重新过滤和排序数据

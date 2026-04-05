@@ -4,10 +4,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState, CandlestickData, BacktestTrade, MarketType } from '../../store/types';
 import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange, setMarketType } from '../../store/actions';
-import { fetchHistoryWithIntegrityCheckV2, getDefaultDateRange, formatDateTimeString, getYesterdayDateString, fetchAllTickers } from '../../services/api';
+import { fetchHistoryWithIntegrityCheckV2, getDefaultDateRange, formatDateTimeString, getYesterdayDateString } from '../../services/api';
 import { fetchAllStocks } from '../../services/stockApi';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
+import { marketDataService, TickerData } from '../../services/marketDataService';
 import {
   calculateMACD,
   calculateRSI,
@@ -3538,20 +3539,16 @@ const CandlestickChart: React.FC = () => {
 
     try {
       setIsLoadingTickers(true);
-      const response = await fetchAllTickers('all', 2000);
-      if (response.success && response.data) {
-        // 格式化数据，保留需要的字段包括交易量
-        const formattedTickers = response.data.map((ticker: any) => ({
-          symbol: ticker.symbol,
-          lastPrice: parseFloat(ticker.lastPrice),
-          priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
-          volume: parseFloat(ticker.quoteVolume || ticker.volume || '0') // 优先使用quoteVolume，因为API返回的主要是这个字段
-        }));
-        setAllTickers(formattedTickers);
-        console.log('获取所有币种行情成功:', formattedTickers.length);
-      } else {
-        console.error('获取所有币种行情失败:', response.message);
-      }
+      const data = await marketDataService.getMarketData();
+      // 格式化数据，保留需要的字段包括交易量
+      const formattedTickers = data.map((ticker: any) => ({
+        symbol: ticker.symbol,
+        lastPrice: parseFloat(ticker.lastPrice),
+        priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
+        volume: parseFloat(ticker.quoteVolume || ticker.volume || '0') // 优先使用quoteVolume，因为API返回的主要是这个字段
+      }));
+      setAllTickers(formattedTickers);
+      console.log('获取所有币种行情成功:', formattedTickers.length);
     } catch (error) {
       console.error('获取所有币种行情时发生错误:', error);
     } finally {

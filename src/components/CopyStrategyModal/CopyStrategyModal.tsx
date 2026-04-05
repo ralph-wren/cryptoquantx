@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAccountBalance, fetchAllTickers } from '../../services/api';
+import { fetchAccountBalance } from '../../services/api';
+import { marketDataService, TickerData } from '../../services/marketDataService';
 import './CopyStrategyModal.css';
 
 interface CopyStrategyModalProps {
@@ -92,22 +93,20 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
   const loadAllTickers = async () => {
     setLoadingTickers(true);
     try {
-      const response = await fetchAllTickers('all', 2000);
-      if (response.success && response.data) {
-        // 格式化数据，保留需要的字段
-        const formattedTickers = response.data.map((ticker: any) => ({
-          symbol: ticker.symbol,
-          lastPrice: parseFloat(ticker.lastPrice),
-          priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
-          volume: parseFloat(ticker.quoteVolume || ticker.volume || '0')
-        }));
-        
-        // 按交易量排序
-        formattedTickers.sort((a: Ticker, b: Ticker) => b.volume - a.volume);
-        
-        setAllTickers(formattedTickers);
-        setFilteredTickers(formattedTickers);
-      }
+      const data = await marketDataService.getMarketData();
+      // 格式化数据，保留需要的字段
+      const formattedTickers = data.map((ticker: any) => ({
+        symbol: ticker.symbol,
+        lastPrice: parseFloat(ticker.lastPrice),
+        priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
+        volume: parseFloat(ticker.quoteVolume || ticker.volume || '0')
+      }));
+      
+      // 按交易量排序
+      formattedTickers.sort((a: Ticker, b: Ticker) => b.volume - a.volume);
+      
+      setAllTickers(formattedTickers);
+      setFilteredTickers(formattedTickers);
     } catch (error) {
       console.error('获取所有币种行情失败:', error);
     } finally {

@@ -20,12 +20,12 @@ import {
   fetchBacktestParameters, 
   updateStopLossPercent, 
   updateTrailingProfitPercent,
-  fetchAllTickers,  // 添加fetchAllTickers API导入
   fetchHistoryWithIntegrityCheck  // 添加数据查询函数
 } from '../../services/api';
 import { fetchAllStocks, StockInfo } from '../../services/stockApi';
 import { formatStockDisplay } from '../../constants/stocks';
 import QuickTimeSelector from '../Chart/QuickTimeSelector';
+import { marketDataService, TickerData } from '../../services/marketDataService';
 
 // 策略接口定义
 interface Strategy {
@@ -826,31 +826,27 @@ const BacktestPanel: React.FC = () => {
     
     setIsLoadingTickers(true);
     try {
-      const result = await fetchAllTickers();
-      if (result.success && result.data) {
-        const formattedTickers = result.data.map((ticker: any) => ({
-          symbol: ticker.symbol,
-          lastPrice: parseFloat(ticker.lastPrice || 0),
-          priceChangePercent: parseFloat(ticker.priceChangePercent || 0),
-          volume: parseFloat(ticker.quoteVolume || ticker.volume || 0)
-        }));
-        
-        setAllTickers(formattedTickers);
-        
-        // 默认按交易量排序
-        const sorted = [...formattedTickers].sort((a, b) => {
-          const volumeA = a.volume || 0;
-          const volumeB = b.volume || 0;
-          return volumeB - volumeA;
-        });
-        
-        setSortedPairs(sorted);
-        setFilteredPairs(sorted);
-        setDisplayedPairs(sorted.slice(0, displayLimit));
-        console.log(`加载加密货币交易对成功: ${formattedTickers.length} 条`);
-      } else {
-        console.error('加载交易对数据失败:', result.message);
-      }
+      const data = await marketDataService.getMarketData();
+      const formattedTickers = data.map((ticker: any) => ({
+        symbol: ticker.symbol,
+        lastPrice: parseFloat(ticker.lastPrice || 0),
+        priceChangePercent: parseFloat(ticker.priceChangePercent || 0),
+        volume: parseFloat(ticker.quoteVolume || ticker.volume || 0)
+      }));
+      
+      setAllTickers(formattedTickers);
+      
+      // 默认按交易量排序
+      const sorted = [...formattedTickers].sort((a, b) => {
+        const volumeA = a.volume || 0;
+        const volumeB = b.volume || 0;
+        return volumeB - volumeA;
+      });
+      
+      setSortedPairs(sorted);
+      setFilteredPairs(sorted);
+      setDisplayedPairs(sorted.slice(0, displayLimit));
+      console.log(`加载加密货币交易对成功: ${formattedTickers.length} 条`);
     } catch (error) {
       console.error('加载交易对数据失败:', error);
     } finally {

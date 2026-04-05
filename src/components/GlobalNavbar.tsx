@@ -2,14 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import './GlobalNavbar.css';
-
-// 行情数据接口
-interface TickerData {
-  symbol: string;
-  lastPrice: string;
-  priceChange: string;
-  priceChangePercent: string;
-}
+import { marketDataService, TickerData } from '../services/marketDataService';
 
 const GlobalNavbar: React.FC = () => {
   const location = useLocation();
@@ -18,62 +11,37 @@ const GlobalNavbar: React.FC = () => {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // 添加API调用状态跟踪，防止重复调用
-  const marketDataApiCallInProgress = useRef<boolean>(false);
-
   // 主流币种列表（加密货币）
   const mainCoins = ['BTC-USDT', 'ETH-USDT', 'XRP-USDT', 'SOL-USDT', 'DOGE-USDT', 'SUI-USDT'];
 
-  // 获取行情数据
-  const fetchMarketData = async () => {
-    // 防止重复调用
-    if (marketDataApiCallInProgress.current) {
-      console.log('行情数据API调用正在进行中，跳过重复调用');
-      return;
-    }
-
-    marketDataApiCallInProgress.current = true;
-
-    try {
-      // 获取加密货币行情
-      const response = await fetch('/api/market/all_tickers?filter=all&limit=2000');
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.code === 200 && data.data) {
-        // 按指定顺序筛选主流币种
-        const mainCoinTickers: TickerData[] = mainCoins.map(coinSymbol => {
-          const ticker = data.data.find((t: any) => t.symbol === coinSymbol);
-          return ticker ? {
-            symbol: ticker.symbol,
-            lastPrice: ticker.lastPrice,
-            priceChange: ticker.priceChange,
-            priceChangePercent: ticker.priceChangePercent
-          } : null;
-        }).filter((ticker): ticker is TickerData => ticker !== null);
-
-        setTickers(mainCoinTickers);
-      }
-    } catch (error) {
-      console.error('获取行情数据失败:', error);
-    } finally {
-      setLoading(false);
-      marketDataApiCallInProgress.current = false;
-    }
-  };
-
-  // 组件挂载时获取数据，并设置定时器
+  // 组件挂载时订阅市场数据
   useEffect(() => {
-    fetchMarketData();
+    // 订阅市场数据更新
+    const unsubscribe = marketDataService.subscribe((data) => {
+      // 按指定顺序筛选主流币种
+      const mainCoinTickers: TickerData[] = mainCoins.map(coinSymbol => {
+        const ticker = data.find((t: any) => t.symbol === coinSymbol);
+        return ticker || null;
+      }).filter((ticker): ticker is TickerData => ticker !== null);
 
-    // 每30秒更新一次
-    const interval = setInterval(fetchMarketData, 30000);
+      setTickers(mainCoinTickers);
+      setLoading(false);
+    });
 
-    return () => clearInterval(interval);
-  }, []); // 移除 marketType 依赖
+    // 启动自动刷新（只在第一次挂载时启动）
+    marketDataService.startAutoRefresh(30000);
+
+    // 立即获取一次数据
+    marketDataService.getMarketData().catch(error => {
+      console.error('获取市场数据失败:', error);
+      setLoading(false);
+    });
+
+    // 清理函数
+    return () => {
+      unsubscribe();
+    };
+  }, []); // 空依赖数组，只在挂载时执行一次
 
   // 格式化价格显示
   const formatPrice = (price: string): string => {
