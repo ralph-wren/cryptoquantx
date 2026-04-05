@@ -284,7 +284,16 @@ const BacktestPanel: React.FC = () => {
     fetchParameters(); // 加载回测参数
   }, [dispatch, strategySetByEvent]); // 添加strategySetByEvent依赖
 
-  // 监听setStrategy事件，接收从URL传递的策略代码、交易对和时间周期
+  // 监听市场类型变化，自动调整时间周期
+  useEffect(() => {
+    if (marketType === 'stock') {
+      const supportedStockTimeframes = ['1D', '1W', '1M'];
+      if (!supportedStockTimeframes.includes(timeframe)) {
+        console.log(`切换到股票模式，当前周期 ${timeframe} 不支持，自动切换到 1D`);
+        dispatch(setTimeframe('1D'));
+      }
+    }
+  }, [marketType, timeframe, dispatch]);
   useEffect(() => {
     const handleSetStrategy = (event: CustomEvent<{strategyCode?: string, symbol?: string, interval?: string}>) => {
       const { strategyCode, symbol, interval } = event.detail;
@@ -1281,9 +1290,21 @@ const BacktestPanel: React.FC = () => {
                         const loadingEvent = new CustomEvent('chartDataLoading', { detail: { loading: true } });
                         window.dispatchEvent(loadingEvent);
                         
+                        // 如果是股票模式，检查并调整时间周期
+                        let actualTimeframe = timeframe;
+                        if (marketType === 'stock') {
+                          // 股票只支持日线、周线、月线
+                          const supportedStockTimeframes = ['1D', '1W', '1M'];
+                          if (!supportedStockTimeframes.includes(timeframe)) {
+                            console.warn(`股票模式不支持 ${timeframe} 周期，自动切换到 1D`);
+                            actualTimeframe = '1D';
+                            dispatch(setTimeframe('1D'));
+                          }
+                        }
+                        
                         const result = await fetchHistoryWithIntegrityCheck(
                           selectedPair,
-                          timeframe,
+                          actualTimeframe,
                           dateRange.startDate,
                           dateRange.endDate
                         );

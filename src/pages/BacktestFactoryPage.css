@@ -255,6 +255,16 @@
   white-space: nowrap;
 }
 
+.strategy-cell.name.clickable {
+  color: #2962ff;
+  transition: all 0.2s ease;
+}
+
+.strategy-cell.name.clickable:hover {
+  color: #1e4bd8;
+  text-decoration: underline;
+}
+
 /* 评价列 - 最宽 */
 .strategy-cell.comments {
   flex: 2.5;

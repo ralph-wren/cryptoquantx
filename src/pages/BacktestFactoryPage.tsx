@@ -5,6 +5,7 @@ import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
 import ResultModal from '../components/ResultModal/ResultModal';
 import CodeModal from '../components/CodeModal/CodeModal';
+import StrategyDetailModal from '../components/StrategyDetailModal/StrategyDetailModal';
 import { Strategy, StrategyMap, ParsedParams, StrategyParam } from '../types/strategy';
 import { useAdaptivePagination } from '../hooks/useAdaptivePagination';
 import './BacktestFactoryPage.css';
@@ -106,6 +107,11 @@ const BacktestFactoryPage: React.FC = () => {
 
   // 添加更新指标分布的状态
   const [updatingIndicators, setUpdatingIndicators] = useState<boolean>(false);
+
+  // 策略详情模态框状态
+  const [showStrategyDetailModal, setShowStrategyDetailModal] = useState(false);
+  const [selectedStrategyForDetail, setSelectedStrategyForDetail] = useState<string>('');
+  const [selectedStrategyNameForDetail, setSelectedStrategyNameForDetail] = useState<string>('');
 
   // 设置默认日期范围（使用统一的默认时间范围）
   useEffect(() => {
@@ -901,9 +907,22 @@ const BacktestFactoryPage: React.FC = () => {
       formattedParams = "参数解析失败";
     }
 
+    // 处理策略名称点击事件
+    const handleStrategyNameClick = () => {
+      setSelectedStrategyForDetail(strategyCode);
+      setSelectedStrategyNameForDetail(strategy.name);
+      setShowStrategyDetailModal(true);
+    };
+
     return (
       <div key={strategyCode} className="strategy-row">
-        <div className="strategy-cell name">{strategy.name}</div>
+        <div 
+          className="strategy-cell name clickable" 
+          onClick={handleStrategyNameClick}
+          title="点击查看策略详情"
+        >
+          {strategy.name}
+        </div>
         <div className="strategy-cell comments">{strategy.comments || '暂无评价'}</div>
         <div className="strategy-cell category">{strategy.category}</div>
         <div className="strategy-cell description">{strategy.description}</div>
@@ -1123,6 +1142,14 @@ const BacktestFactoryPage: React.FC = () => {
         message="代码编译失败，策略当前不可执行，请检查策略代码后重试。"
         confirmText="确定"
         cancelText="取消"
+      />
+
+      {/* 策略详情模态框 */}
+      <StrategyDetailModal
+        isOpen={showStrategyDetailModal}
+        onClose={() => setShowStrategyDetailModal(false)}
+        strategyCode={selectedStrategyForDetail}
+        strategyName={selectedStrategyNameForDetail}
       />
     </div>
   );
