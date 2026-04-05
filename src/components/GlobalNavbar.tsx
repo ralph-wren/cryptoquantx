@@ -28,9 +28,11 @@ const GlobalNavbar: React.FC = () => {
       setLoading(false);
     });
 
-    // 启动自动刷新（只在第一次挂载时启动）
-    // startAutoRefresh 内部会立即获取一次数据，无需再次调用 getMarketData
-    marketDataService.startAutoRefresh(30000);
+    // 手动获取一次数据（不启动自动刷新）
+    marketDataService.getMarketData(false).catch(err => {
+      console.error('获取市场数据失败:', err);
+      setLoading(false);
+    });
 
     // 清理函数
     return () => {

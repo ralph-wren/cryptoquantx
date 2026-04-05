@@ -150,16 +150,18 @@ class MarketDataService {
    */
   public startAutoRefresh(interval: number = 30000): void {
     if (this.refreshInterval) {
+      console.log('⚠️ 自动刷新已经在运行中，忽略重复调用');
       return; // 已经在刷新中
     }
 
-    console.log('启动市场数据自动刷新，间隔:', interval, 'ms');
+    console.log('🔄 启动市场数据自动刷新，间隔:', interval, 'ms');
     
     // 立即获取一次数据
     this.getMarketData(true);
     
     // 设置定时刷新
     this.refreshInterval = setInterval(() => {
+      console.log('⏰ 定时刷新市场数据');
       this.getMarketData(true);
     }, interval);
   }

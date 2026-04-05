@@ -81,7 +81,7 @@ const AccountInfoPanel: React.FC = () => {
   // 组件加载时获取数据
   useEffect(() => {
     loadAccountBalance();
-    loadAllTickers();
+    // 不需要手动调用 loadAllTickers()，订阅会自动获取数据
     
     // 订阅市场数据更新
     const unsubscribe = marketDataService.subscribe((data) => {
@@ -92,6 +92,7 @@ const AccountInfoPanel: React.FC = () => {
         volume: parseFloat(ticker.quoteVolume || ticker.volume || '0')
       }));
       setAllTickers(formattedTickers);
+      setIsLoadingTickers(false);
     });
     
     // 每5分钟刷新一次账户余额
