@@ -44,6 +44,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  height: 36px;
 }
 
 .manual-record-btn:hover:not(:disabled) {
@@ -72,6 +73,10 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .time-range-selector button:hover {

@@ -82,7 +82,7 @@
 }
 
 .view-details-btn {
-  background-color: #3a506b;
+  background-color: #2962ff;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -90,10 +90,14 @@
   cursor: pointer;
   font-size: 13px;
   transition: background-color 0.3s;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .view-details-btn:hover {
-  background-color: #4a618b;
+  background-color: #1e4bd8;
 }
 
 /* Pagination Styles - Aligned with BacktestSummaryPage */
@@ -119,23 +123,24 @@
 }
 
 .pagination-button {
-  background-color: #293042;
-  color: #e6e6e6;
-  border: 1px solid #3a3f52;
+  background-color: rgb(41, 98, 255);
+  color: white;
+  border: none;
   padding: 6px 12px;
   margin: 0 5px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 13px;
-  height: auto;
-  min-width: auto;
-  display: inline-block;
+  height: 36px;
+  min-width: 60px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #3a4258;
-  border-color: #4a5169;
+  background-color: #1e4bd8;
 }
 
 .pagination-button:disabled {

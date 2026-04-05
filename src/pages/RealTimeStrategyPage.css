@@ -40,6 +40,10 @@
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.3s ease;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .refresh-button:hover {
@@ -305,6 +309,10 @@
   font-weight: 500;
   transition: background-color 0.2s;
   margin-right: 8px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .strategy-detail-btn:hover {
@@ -321,6 +329,10 @@
   font-size: 13px;
   font-weight: 500;
   transition: background-color 0.2s;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .strategy-start-btn:hover {
@@ -343,6 +355,10 @@
   font-size: 13px;
   font-weight: 500;
   transition: background-color 0.2s;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .strategy-stop-btn:hover {
@@ -366,6 +382,10 @@
   font-weight: 500;
   transition: background-color 0.2s;
   margin-left: 8px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .strategy-delete-btn:hover {
@@ -389,6 +409,10 @@
   font-weight: 500;
   transition: background-color 0.2s;
   margin-left: 8px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .strategy-copy-btn:hover {
@@ -413,6 +437,10 @@
   font-weight: 500;
   transition: background-color 0.2s;
   margin-left: 8px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .strategy-buy-btn:hover {
@@ -437,6 +465,10 @@
   font-weight: 500;
   transition: background-color 0.2s;
   margin-left: 8px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .strategy-sell-btn:hover {

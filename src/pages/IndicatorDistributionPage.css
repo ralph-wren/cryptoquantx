@@ -71,6 +71,10 @@
   font-size: 14px;
   transition: all 0.2s;
   color: #e6e6e6;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filter-btn:hover {
@@ -126,6 +130,10 @@
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .refresh-btn {
@@ -474,7 +482,7 @@
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s ease;
-  height: 32px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -971,20 +971,24 @@ const BacktestFactoryPage: React.FC = () => {
           >
             执行
           </button>
-          <button
-            className={`update-btn ${isPresetStrategy ? 'disabled' : ''}`}
-            onClick={() => !isPresetStrategy && openUpdateModal(strategy.id || 0)}
-            disabled={isPresetStrategy}
-            title={isPresetStrategy ? '预置策略不允许更新' : '更新策略'}
-          >
-            更新
-          </button>
-          <button
-            className="delete-btn"
-            onClick={() => handleDeleteStrategy(strategyCode)}
-          >
-            删除
-          </button>
+          {/* 预置策略不显示更新和删除按钮 */}
+          {!isPresetStrategy && (
+            <>
+              <button
+                className="update-btn"
+                onClick={() => openUpdateModal(strategy.id || 0)}
+                title="更新策略"
+              >
+                更新
+              </button>
+              <button
+                className="delete-btn"
+                onClick={() => handleDeleteStrategy(strategyCode)}
+              >
+                删除
+              </button>
+            </>
+          )}
         </div>
       </div>
     );

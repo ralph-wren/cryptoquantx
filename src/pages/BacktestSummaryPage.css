@@ -47,6 +47,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 36px;
 }
 
 .refresh-button:hover, .back-button:hover {

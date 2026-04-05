@@ -129,6 +129,10 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filter-btn:hover {
@@ -155,6 +159,7 @@
   gap: 6px;
   min-width: 120px;
   justify-content: center;
+  height: 36px;
 }
 
 .generate-strategy-btn:hover:not(:disabled) {
@@ -208,7 +213,7 @@
   padding: 14px 15px;
   border-bottom: 1px solid #2a2a3a;
   color: #e6e6e6;
-  min-height: 90px;
+  min-height: 120px;
   box-sizing: border-box;
   align-items: center;
   width: 100%;
@@ -284,11 +289,12 @@
   overflow-wrap: break-word;
   word-break: break-word;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-height: 4.5em;
+  max-height: 7.5em;
+  line-height: 1.5;
 }
 
 /* 分类列 */
@@ -380,12 +386,12 @@
 }
 
 .code-btn {
-  background-color: #17a2b8;
+  background-color: #2962ff;
   color: white;
 }
 
 .code-btn:hover {
-  background-color: #138496;
+  background-color: #1e4bd8;
 }
 
 .view-btn {
@@ -403,12 +409,12 @@
 }
 
 .update-btn {
-  background-color: #2196f3;
+  background-color: #2962ff;
   color: white;
 }
 
 .update-btn:hover:not(:disabled) {
-  background-color: #1976d2;
+  background-color: #1e4bd8;
 }
 
 .update-btn:disabled {
